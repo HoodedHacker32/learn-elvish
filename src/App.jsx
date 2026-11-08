@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { COURSES, COURSE_NAME, LANG_NAME, ORIGIN, READING, knownForms } from './course/index.js'
-import { buildLesson, buildReview } from './learn/exercises.js'
-import { checkTyped, sameWords } from './learn/check.js'
+import { buildLesson, buildReview, buildTengwarLesson, buildTengwarReview } from './learn/exercises.js'
+import { checkTyped, checkTengwar, sameWords } from './learn/check.js'
+import { TengwarTyper, TengwarDesk, TakeAway } from './tengwar-ui.jsx'
+import { toTengwar } from '../../LoTR Elvish Translator/src/engine/tengwar.js'
 import { dueKeys, grade, introduce, strength, today } from './learn/srs.js'
 import { earn, fresh, useProgress } from './learn/store.js'
 import { streakInfo, FREEZES_PER_WEEK } from './learn/streak.js'
@@ -11,7 +13,7 @@ import { auth } from './accounts/index.js'
 import { PLATFORM, reminders, translatorLink, TRANSLATOR_URL } from './platform/index.js'
 
 const XP = { right: 10, accents: 8 }
-const ASKS = new Set(['pick-en', 'pick-el', 'type-el', 'tiles', 'stress', 'rule', 'tengwar', 'match'])
+const ASKS = new Set(['pick-en', 'pick-el', 'type-el', 'tiles', 'stress', 'rule', 'tengwar', 'match', 'tw-sound', 'tw-letter', 'tw-pick', 'tw-type'])
 const reduced = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches
 
 // ——— small parts ———
@@ -170,9 +172,9 @@ function TitleBar({ state, update, go, profile, onSwitch }) {
         <span className="logo__name">Pedo Edhellen</span>
       </button>
       <div className="track" role="radiogroup" aria-label="Course">
-        {['S', 'Q', 'R'].map((t) => (
+        {['S', 'Q', 'R', 'T'].map((t) => (
           <button key={t} role="radio" aria-checked={state.track === t} className={state.track === t ? 'is-on' : ''} onClick={() => { update((s) => ({ ...s, track: t })); go({ name: 'home' }) }}>
-            {t === 'R' ? 'Roleplay' : LANG_NAME[t]}
+            {t === 'R' ? 'Roleplay' : t === 'T' ? 'Tengwar' : LANG_NAME[t]}
           </button>
         ))}
       </div>
@@ -405,6 +407,8 @@ function Home({ course, state, profile, onOpen, onReview, onRead }) {
         </div>
       </section>
 
+      {course.id === 'T' && <TengwarDesk />}
+
       <section className="challenges" aria-label="Today’s challenges">
         <div className="section-head">
           <h2>Today’s challenges</h2>
@@ -448,7 +452,7 @@ function Home({ course, state, profile, onOpen, onReview, onRead }) {
                         <span className="lesson__mark" aria-hidden="true"><Leaf origin={rec?.done ? 'tolkien' : 'early'} /></span>
                         <span className="lesson__text">
                           <span className="lesson__title">{l.title}</span>
-                          <span className="lesson__meta">{l.tengwar ? 'Read the letters' : `${l.items.length} to learn`}{rec?.done ? ` · best ${rec.score}%` : isNext ? ' · up next' : ''}</span>
+                          <span className="lesson__meta">{l.tengwar ? 'Read the letters' : course.id === 'T' ? `${l.items.length} to read` : `${l.items.length} to learn`}{rec?.done ? ` · best ${rec.score}%` : isNext ? ' · up next' : ''}</span>
                         </span>
                       </button>
                     </li>
@@ -480,7 +484,35 @@ function Teach({ note, lang }) {
   )
 }
 
+const LANG_TAG = { S: 'Sindarin', Q: 'Quenya', E: 'English' }
+
+function LearnTengwar({ item }) {
+  const what = { letter: 'New letter', mark: 'New sign', number: 'Number', tword: LANG_TAG[item.lang] ? `Read it · ${LANG_TAG[item.lang]}` : 'Read it' }[item.kind]
+  return (
+    <div className="card card--learn">
+      <span className="label">{what}</span>
+      <p className="tengwar tengwar--hero" aria-label="In Tengwar">{item.tengwar}</p>
+      {item.kind === 'letter' ? (
+        <>
+          <p className="learn__el"><span className="elv elv--big">{item.el}</span></p>
+          <p className="learn__say"><span className="label">Sound</span> {item.en}</p>
+        </>
+      ) : item.kind === 'tword' ? (
+        <>
+          <p className="learn__el"><Elv lang={item.lang} big>{item.el}</Elv></p>
+          {item.lang !== 'E' && <p className="learn__en">“{item.en}”</p>}
+        </>
+      ) : (
+        <p className="learn__el"><span className="elv elv--big">{item.el}</span>{item.en !== item.el && <span className="learn__lit"> · {item.en}</span>}</p>
+      )}
+      {item.note && <p className="learn__note">{item.note}</p>}
+      <div className="learn__foot"><Origin item={item} /></div>
+    </div>
+  )
+}
+
 function Learn({ item }) {
+  if (item.key.startsWith('T:')) return <LearnTengwar item={item} />
   return (
     <div className="card card--learn">
       <span className="label">New {item.kind === 'word' ? 'word' : 'line'}{item.lang === 'Q' && item.kind !== 'word' ? ' · Quenya' : ''}</span>
@@ -505,6 +537,7 @@ const PROMPT = {
   'pick-en': 'What does this mean?', 'pick-el': 'Which is the Elvish?', 'type-el': 'Write this in Elvish',
   tiles: 'Build it in Elvish', stress: 'Which syllable takes the stress?', tengwar: 'Which word do these letters spell?',
   match: 'Match the pairs',
+  'tw-sound': 'What is this letter?', 'tw-letter': 'Which letter is this?', 'tw-pick': 'Which is it in Tengwar?', 'tw-type': 'Write it in Tengwar',
 }
 
 function Choices({ step, onAnswer, answered, lang }) {
@@ -526,7 +559,7 @@ function Choices({ step, onAnswer, answered, lang }) {
           <li key={o} style={{ '--i': i }}>
             <button className={'choice' + st} disabled={!!answered} onClick={() => onAnswer(o)}>
               <span className="choice__n">{i + 1}</span>
-              {elvish ? <Elv lang={step.item?.lang || lang}>{o}</Elv> : <span className={step.t === 'stress' ? 'choice__say' : ''}>{o}</span>}
+              {step.tengwarOptions ? <span className="tengwar tengwar--choice">{o}</span> : elvish ? <Elv lang={step.item?.lang || lang}>{o}</Elv> : <span className={step.t === 'stress' ? 'choice__say' : ''}>{o}</span>}
             </button>
           </li>
         )
@@ -544,6 +577,17 @@ function Ask({ step, onAnswer, answered, lang }) {
         <span className="label">{step.ask}</span>
         <p className="ask__show"><Elv lang={lang} big>{step.q}</Elv> <span className="ask__gloss">({step.gloss})</span></p>
         <Choices step={step} onAnswer={onAnswer} answered={answered} lang={lang} />
+      </div>
+    )
+  }
+  if (step.t.startsWith('tw-')) {
+    const tag = LANG_TAG[it.lang] ? ` · ${LANG_TAG[it.lang]}` : ''
+    return (
+      <div className="card">
+        <span className="label">{PROMPT[step.t]}</span>
+        {step.t === 'tw-sound' && <p className="tengwar tengwar--ask" aria-label="Letter to name">{it.tengwar}</p>}
+        {step.t !== 'tw-sound' && <p className="ask__en">{it.kind === 'letter' ? <><strong>{it.en}</strong><span className="ask__gloss"> · {it.el}</span></> : <><Elv lang={it.lang}>{it.el}</Elv><span className="ask__gloss">{tag}</span></>}</p>}
+        {step.t === 'tw-type' ? <TengwarTyper onAnswer={onAnswer} answered={answered} /> : <Choices step={step} onAnswer={onAnswer} answered={answered} lang={lang} />}
       </div>
     )
   }
@@ -622,11 +666,26 @@ function Match({ step, onDone, lang }) {
 
 function judge(step, given) {
   if (step.t === 'type-el') return checkTyped(given, step.answer)
+  // plain silmë where the turned-over form belongs counts, and is pointed out like a missing accent
+  if (step.t === 'tw-type') { const c = checkTengwar(given, step.answer); return c === 'turned' ? 'accents' : c }
   if (step.t === 'tiles') return sameWords(given, step.answer) ? 'right' : 'wrong'
   return given === step.answer ? 'right' : 'wrong'
 }
 
 const PRAISE = ['Right.', 'Yes.', 'Well done.', 'Exactly.', 'Correct.']
+
+function Scribe({ text, lang }) {
+  const tengwar = toTengwar(text, lang)
+  return (
+    <div className="card card--learn">
+      <span className="label">Your name in Tengwar</span>
+      <p className="tengwar tengwar--hero" aria-label="In Tengwar">{tengwar}</p>
+      <p className="learn__el"><span className="elv elv--big">{text}</span></p>
+      <p className="hint">Spelt letter by letter, as Tolkien wrote English. Try other spellings, or anything else, at the Write in Tengwar desk on the Tengwar page.</p>
+      <TakeAway tengwar={tengwar} latin={text} />
+    </div>
+  )
+}
 
 function Session({ title, lang, initial, onFinish, onQuit }) {
   const [queue, setQueue] = useState(initial)
@@ -660,7 +719,7 @@ function Session({ title, lang, initial, onFinish, onQuit }) {
     return () => window.removeEventListener('keydown', key)
   })
 
-  const plain = step.t === 'teach' || step.t === 'learn'
+  const plain = step.t === 'teach' || step.t === 'learn' || step.t === 'scribe'
   return (
     <div className="session">
       <div className="session__top">
@@ -671,6 +730,7 @@ function Session({ title, lang, initial, onFinish, onQuit }) {
       <div className={'session__stage' + (answered ? ` is-${answered.result}` : '')} key={i}>
         {step.t === 'teach' && <Teach note={step.note} lang={lang} />}
         {step.t === 'learn' && <Learn item={step.item} />}
+        {step.t === 'scribe' && <Scribe text={step.text} lang={step.lang} />}
         {step.t === 'match' && <Match step={step} lang={lang} onDone={(clean) => { setLog((l) => [...l, { key: null, result: clean ? 'right' : 'accents', t: 'match' }]); next() }} />}
         {!plain && step.t !== 'match' && <Ask step={step} onAnswer={answer} answered={answered} lang={lang} />}
       </div>
@@ -678,8 +738,11 @@ function Session({ title, lang, initial, onFinish, onQuit }) {
         {answered ? (
           <>
             <div className="verdict">
-              <strong>{answered.result === 'right' ? answered.praise : answered.result === 'accents' ? 'Right. Mind the accents.' : 'Not quite.'}</strong>
-              {answered.result !== 'right' && step.t !== 'rule' && step.item && (
+              <strong>{answered.result === 'right' ? answered.praise : answered.result === 'accents' ? (step.t === 'tw-type' ? 'Right. When a vowel sits on silmë or essë, it is turned over.' : 'Right. Mind the accents.') : 'Not quite.'}</strong>
+              {answered.result !== 'right' && step.t !== 'rule' && step.item?.key.startsWith('T:') && (
+                <span> <span className="tengwar tengwar--inline">{step.item.tengwar}</span> · {step.item.kind === 'letter' ? `${step.item.el}, ${step.item.en}` : step.item.el}</span>
+              )}
+              {answered.result !== 'right' && step.t !== 'rule' && step.item && !step.item.key.startsWith('T:') && (
                 <span> <Elv lang={step.item.lang}>{step.item.el}</Elv> · “{step.item.en}”{step.t === 'stress' ? ` · ${step.item.say}` : ''}</span>
               )}
               {answered.result !== 'right' && step.t === 'rule' && <span> <Elv lang={lang}>{step.q} → {step.answer}</Elv></span>}
@@ -688,9 +751,9 @@ function Session({ title, lang, initial, onFinish, onQuit }) {
             <button className="btn btn--primary" onClick={next} autoFocus>Continue</button>
           </>
         ) : plain ? (
-          <button className="btn btn--primary" onClick={next} autoFocus>{step.t === 'teach' ? 'Got it' : 'Next'}</button>
+          <button className="btn btn--primary" onClick={next} autoFocus>{step.t === 'teach' ? 'Got it' : step.t === 'scribe' ? 'Finish' : 'Next'}</button>
         ) : (
-          <span className="hint">{asks} exercises · 1–4 to choose · Enter to continue</span>
+          <span className="hint">{asks} exercises · {step.t === 'tw-type' ? 'type with the Annatar keys' : '1–4 to choose'} · Enter to continue</span>
         )}
       </div>
     </div>
@@ -901,11 +964,13 @@ function Signed({ profile, onSwitch }) {
 
   const openLesson = (id) => {
     const lesson = course.lessons.find((l) => l.id === id)
-    go({ name: 'session', kind: 'lesson', lesson, steps: buildLesson(lesson, course), title: lesson.title })
+    const steps = course.id === 'T' ? buildTengwarLesson(lesson, course, Date.now(), { name: profile.name }) : buildLesson(lesson, course)
+    go({ name: 'session', kind: 'lesson', lesson, steps, title: lesson.title })
   }
   const openReview = () => {
     const keys = dueKeys(state.srs, course.lang).filter((k) => course.byKey.has(k)).slice(0, 15)
-    if (keys.length) go({ name: 'session', kind: 'review', steps: buildReview(keys, course, Date.now(), state.srs), title: 'Review' })
+    const build = course.id === 'T' ? buildTengwarReview : buildReview
+    if (keys.length) go({ name: 'session', kind: 'review', steps: build(keys, course, Date.now(), state.srs), title: 'Review' })
   }
 
   const finish = (log) => {
@@ -964,7 +1029,7 @@ function Signed({ profile, onSwitch }) {
             <h1>{PAGE[view.name]}</h1>
             <span className="pagehead__side">
               {view.name === 'home' && <Out href={TRANSLATOR_URL}>Translate anything in Lam Edhellen</Out>}
-              {view.name === 'reading' && <span className="hint">{LANG_NAME[course.lang]} · lit words are ones you know</span>}
+              {view.name === 'reading' && <span className="hint">{LANG_NAME[course.lang === 'T' ? 'S' : course.lang]} · lit words are ones you know</span>}
               {view.name === 'settings' && <span className="hint">{profile.name} · {PLATFORM === 'desktop' ? 'saved on this computer' : sync === 'account' ? 'saved to your account' : 'saved in this browser'}</span>}
             </span>
           </div>
@@ -979,7 +1044,7 @@ function Signed({ profile, onSwitch }) {
           {view.name === 'home' && <Home course={course} state={state} profile={profile} onOpen={openLesson} onReview={openReview} onRead={() => go({ name: 'reading' })} />}
           {view.name === 'session' && <Session key={view.title + view.steps.length} title={view.title} lang={course.lang} initial={view.steps} onFinish={finish} onQuit={() => go({ name: 'home' })} />}
           {view.name === 'done' && <Done summary={view.summary} onHome={() => go({ name: 'home' })} onNext={view.next ? () => openLesson(view.next) : null} />}
-          {view.name === 'reading' && <Reading lang={course.lang} state={state} onRead={readLine} />}
+          {view.name === 'reading' && <Reading lang={course.lang === 'T' ? 'S' : course.lang} state={state} onRead={readLine} />}
           {view.name === 'notebook' && <Notebook course={course} state={state} />}
           {view.name === 'settings' && (
             <Settings state={state} update={update} profile={profile} sync={sync} onSwitch={onSwitch}
