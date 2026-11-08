@@ -105,7 +105,7 @@ Tengwar keyboard; transcribe a line; and, in Writing mode, trace, write from mem
 
 ## Building it, in order
 
-1. **Engine:** an English orthographic mode, numerals, punctuation, conversion for Annatar, and export as SVG/PNG. With tests.
+1. **Engine** (done, 8 November): fixed 13 letters that were on the wrong code points, and added the English orthographic mode, numerals and Annatar conversion, all with tests. Export as PNG/SVG moved to step 2, since it draws in the browser.
 2. **The Tengwar keyboard and the reading and typing lessons** (units 1–6 without writing).
 3. **Writing mode:** stroke data, tracing, the recogniser, stroke animation. Measured on the iPad 9.
 4. **The guide pages** (fonts, keyboards, transcribers), in the app and on the website.
@@ -113,7 +113,7 @@ Tengwar keyboard; transcribe a line; and, in Writing mode, trace, write from mem
 
 ## Still to check while building
 
-- The exact Tengwar Annatar key mapping (from Johan Winge's own documentation).
+- ~~The exact Tengwar Annatar key mapping~~: done, from Winge's tables. It reproduces his own example.
 - The current way to install a custom font on iPadOS and iOS 26.
 - Official download pages for Alcarin Tengwar and Tengwar Annatar, and their licence wording.
 - Whether the Metapen A8 reports tilt to the browser (pressure is not needed either way).
