@@ -65,20 +65,24 @@ test('goals quiz: a D&D roleplayer gets Sindarin and the phrasebook, with the re
   assert.equal(recommend({ use: ['songs'], elves: 'high', time: '5' }).track, 'Q')
 })
 
-test('local accounts: profiles, hashed passwords, separate progress', async () => {
-  const { LocalAuthProvider, LocalProgressRepository } = await import('../src/accounts/local.js')
-  const auth = new LocalAuthProvider()
-  const repo = new LocalProgressRepository()
-  const a = await auth.signUp({ name: 'Tester', password: 'mellon' })
-  const b = await auth.signUp({ name: 'Guest' })
-  assert.equal((await auth.listProfiles()).length, 2)
-  assert.ok(![...mem.values()].some((v) => v.includes('mellon')), 'password must never be stored as text')
-  await assert.rejects(auth.signIn(a.id, 'wrong'), (e) => e.code === 'wrong_password')
-  assert.equal((await auth.signIn(a.id, 'mellon')).name, 'Tester')
-  await assert.rejects(auth.signUp({ name: 'tester' }), (e) => e.code === 'name_taken')
-  await repo.save(a.id, { xp: 10 })
-  await repo.save(b.id, { xp: 99 })
-  assert.equal((await repo.load(a.id)).xp, 10)
-  await auth.remove(b.id)
-  assert.equal(await repo.load(b.id), null)
+test('progress from two devices merges without losing anything', async () => {
+  const { mergeProgress, fresh } = await import('../src/learn/store.js')
+  const base = fresh()
+  const phone = { ...base, updatedAt: 100, xp: 40, name: '', practiceDays: [1, 3],
+    lessons: { a: { done: true, score: 80, at: 3 } }, srs: { 'S:aran': { box: 3, due: 9, r: 3, w: 0 } }, days: { 3: 40 } }
+  const pc = { ...base, updatedAt: 200, xp: 30, name: 'Tester', practiceDays: [2, 3],
+    lessons: { a: { done: true, score: 95, at: 2 }, b: { done: true, score: 70, at: 2 } },
+    srs: { 'S:aran': { box: 1, due: 4, r: 0, w: 1 }, 'S:roch': { box: 1, due: 5, r: 0, w: 0 } }, days: { 2: 30, 3: 10 }, settings: { ...base.settings, goal: 120 } }
+  const m = mergeProgress(phone, pc)
+  assert.deepEqual(m.practiceDays, [1, 2, 3])
+  assert.equal(m.lessons.a.score, 95)
+  assert.ok(m.lessons.b.done)
+  assert.equal(m.srs['S:aran'].box, 3) // the copy practised more wins
+  assert.ok(m.srs['S:roch'])
+  assert.equal(m.days[3], 40)
+  assert.equal(m.xp, 40)
+  assert.equal(m.name, 'Tester')
+  assert.equal(m.settings.goal, 120) // settings from the copy changed last
+  assert.equal(m.updatedAt, 200)
+  assert.deepEqual(mergeProgress(phone, null), phone)
 })

@@ -542,3 +542,22 @@ cite { font-style: italic; color: var(--silver-3); }
 }
 .desk__input:focus-visible, .twfield:focus-visible { outline: 2px solid var(--enamel); outline-offset: 2px; }
 .desk__out { font-size: clamp(34px, 7vw, 52px); color: var(--silver); min-height: 1.5em; }
+
+/* ——— accounts and updates ——— */
+.nudge {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px;
+  margin-bottom: 20px; padding: 12px 16px; border: 1px solid var(--line-soft); border-radius: var(--leaf-r);
+  background: var(--ground-deep); font-size: 14px; color: var(--silver-2);
+}
+.nudge strong { color: var(--silver); }
+.account { display: grid; gap: 12px; max-width: 520px; margin: 0 auto 24px; }
+.update {
+  position: fixed; z-index: 60; left: 50%; bottom: max(20px, env(safe-area-inset-bottom)); transform: translateX(-50%);
+  width: min(560px, calc(100vw - 32px)); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px;
+  padding: 14px 16px; border: 1px solid rgba(220, 184, 98, 0.5); border-radius: var(--leaf-r);
+  background: var(--panel); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45); color: var(--silver); font-size: 14px;
+  animation: rise 0.4s var(--ease) both;
+}
+@keyframes rise { from { opacity: 0; transform: translate(-50%, 12px); } }
+@media (max-width: 760px) { .update { bottom: calc(76px + env(safe-area-inset-bottom)); } }
+@media (prefers-reduced-motion: reduce) { .update { animation: none; } }

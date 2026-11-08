@@ -9,7 +9,8 @@ import { earn, fresh, useProgress } from './learn/store.js'
 import { streakInfo, FREEZES_PER_WEEK } from './learn/streak.js'
 import { todaysChallenges, countSession, progressOf } from './learn/challenges.js'
 import { QUIZ, recommend } from './learn/quiz.js'
-import { auth } from './accounts/index.js'
+import { account, accountsAvailable } from './accounts/index.js'
+import { checkForUpdate, applyUpdate, DOWNLOAD_PAGE } from './platform/update.js'
 import { PLATFORM, reminders, translatorLink, TRANSLATOR_URL } from './platform/index.js'
 
 const XP = { right: 10, accents: 8 }
@@ -160,7 +161,7 @@ const ICON = {
 }
 const Icon = ({ name }) => <svg className="icon" viewBox="0 0 24 24" aria-hidden="true">{ICON[name]}</svg>
 
-function TitleBar({ state, update, go, profile, onSwitch }) {
+function TitleBar({ state, update, go, profile, user, onAccount }) {
   const [menu, setMenu] = useState(false)
   return (
     <header className={'titlebar' + (PLATFORM === 'desktop' ? ' titlebar--desktop' : '')}>
@@ -180,12 +181,14 @@ function TitleBar({ state, update, go, profile, onSwitch }) {
       </div>
       <div className="titlebar__end">
         <div className="me">
-          <button className="me__btn" onClick={() => setMenu(!menu)} aria-expanded={menu} aria-label={`Profile: ${profile.name}`} title={profile.name}>{profile.name[0].toUpperCase()}</button>
+          <button className="me__btn" onClick={() => setMenu(!menu)} aria-expanded={menu} aria-label={user ? `Account: ${user.email}` : 'Your progress'} title={user?.email || profile.name || 'Your progress'}>{(profile.name || user?.email || 'E')[0].toUpperCase()}</button>
           {menu && (
             <div className="me__menu" role="menu" onMouseLeave={() => setMenu(false)}>
-              <p className="me__name">{profile.name}</p>
+              {(profile.name || user) && <p className="me__name">{profile.name || user.email}</p>}
               <button role="menuitem" onClick={() => { setMenu(false); go({ name: 'settings' }) }}>Settings</button>
-              <button role="menuitem" onClick={() => { setMenu(false); onSwitch() }}>Switch profile</button>
+              {accountsAvailable && (user
+                ? <button role="menuitem" onClick={() => { setMenu(false); account.signOut() }}>Sign out</button>
+                : <button role="menuitem" onClick={() => { setMenu(false); onAccount('signup') }}>Save progress across devices</button>)}
             </div>
           )}
         </div>
@@ -233,64 +236,85 @@ function TitleStrip() {
   )
 }
 
-// ——— first run: profiles and the goals quiz ———
+// ——— accounts: optional, only offered when online ———
 
-function Welcome({ onSignedIn }) {
-  const [profiles, setProfiles] = useState(null)
-  const [mode, setMode] = useState('pick')
-  const [name, setName] = useState('')
+function useOnline() {
+  const [on, setOn] = useState(() => typeof navigator === 'undefined' || navigator.onLine !== false)
+  useEffect(() => {
+    const up = () => setOn(true), down = () => setOn(false)
+    window.addEventListener('online', up); window.addEventListener('offline', down)
+    return () => { window.removeEventListener('online', up); window.removeEventListener('offline', down) }
+  }, [])
+  return on
+}
+
+function AccountForm({ start = 'signup', name, onDone, onCancel }) {
+  const [mode, setMode] = useState(start)
+  const [email, setEmail] = useState('')
   const [pw, setPw] = useState('')
-  const [unlock, setUnlock] = useState(null)
   const [err, setErr] = useState('')
-  useEffect(() => { auth.listProfiles().then((p) => { setProfiles(p); if (!p.length) setMode('new') }) }, [])
-  const create = async (e) => {
+  const [busy, setBusy] = useState(false)
+  const [sent, setSent] = useState(false)
+  const submit = async (e) => {
     e.preventDefault()
-    try { onSignedIn(await auth.signUp({ name, password: pw || undefined })) } catch (x) { setErr(x.message) }
+    setErr(''); setBusy(true)
+    try {
+      if (mode === 'signup') {
+        const r = await account.signUp({ email, password: pw, name })
+        if (r.confirm) setSent(true); else onDone()
+      } else { await account.signIn({ email, password: pw }); onDone() }
+    } catch (x) { setErr(x.message) } finally { setBusy(false) }
   }
-  const open = async (p, password) => {
-    try { onSignedIn(await auth.signIn(p.id, password)) } catch (x) { setErr(x.message) }
+  if (sent) {
+    return (
+      <div className="card account">
+        <span className="label">Check your email</span>
+        <p>We sent a link to <strong>{email}</strong>. Open it to confirm your account, then sign in here. Until then, your progress is saved on this device.</p>
+        <div className="row"><button className="btn btn--primary" onClick={() => { setSent(false); setMode('signin') }}>Sign in</button><button className="btn btn--quiet" onClick={onCancel}>Later</button></div>
+      </div>
+    )
   }
-  if (!profiles) return null
   return (
-    <div className="welcome">
-      <p className="welcome__elv"><Elv lang="S" big>Suilad!</Elv></p>
-      <p className="welcome__lit">“Greetings!” Pedo Edhellen teaches Tolkien’s Elvish, a few minutes at a time.</p>
-      {mode === 'pick' && (
-        <div className="card welcome__card">
-          <span className="label">Who is learning?</span>
-          <ul className="profiles">
-            {profiles.map((p) => (
-              <li key={p.id}>
-                {unlock?.id === p.id ? (
-                  <form className="unlock" onSubmit={(e) => { e.preventDefault(); open(p, pw) }}>
-                    <input id="unlock-password" type="password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder={`Password for ${p.name}`} autoFocus aria-label="Password" />
-                    <button className="btn btn--primary" type="submit">Open</button>
-                  </form>
-                ) : (
-                  <button className="profile" onClick={() => (p.hasPassword ? (setUnlock(p), setPw(''), setErr('')) : open(p))}>
-                    <span className="profile__init" aria-hidden="true">{p.name[0].toUpperCase()}</span>{p.name}{p.hasPassword && <span className="hint"> · password</span>}
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
-          {err && <p className="error">{err}</p>}
-          <button className="btn" onClick={() => { setMode('new'); setErr(''); setPw('') }}>Add a profile</button>
-        </div>
-      )}
-      {mode === 'new' && (
-        <form className="card welcome__card" onSubmit={create}>
-          <span className="label">Make your profile</span>
-          <label className="field">Your name<input id="new-name" value={name} onChange={(e) => setName(e.target.value)} autoFocus maxLength={40} autoComplete="nickname" /></label>
-          <label className="field">Password <span className="hint">(optional, for a shared computer)</span><input id="new-password" type="password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="new-password" /></label>
-          <p className="hint">Profiles live on this device for now. Your progress stays separate from anyone else’s here.</p>
-          {err && <p className="error">{err}</p>}
-          <div className="row">
-            <button className="btn btn--primary" type="submit" disabled={!name.trim()}>Start</button>
-            {profiles.length > 0 && <button type="button" className="btn btn--quiet" onClick={() => setMode('pick')}>Back</button>}
-          </div>
-        </form>
-      )}
+    <form className="card account" onSubmit={submit}>
+      <span className="label">{mode === 'signup' ? 'Save your progress across devices' : 'Sign in'}</span>
+      <p className="hint">{mode === 'signup' ? 'Your progress so far comes with you. You can keep learning without an account; this only adds a copy online.' : 'Progress on this device and in your account are joined, so nothing is lost.'}</p>
+      <label className="field">Email<input id="account-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required /></label>
+      <label className="field">Password<input id="account-password" type="password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} minLength={8} required /></label>
+      {err && <p className="error">{err}</p>}
+      <div className="row">
+        <button className="btn btn--primary" type="submit" disabled={busy}>{busy ? 'One moment…' : mode === 'signup' ? 'Sign up' : 'Sign in'}</button>
+        <button type="button" className="btn btn--quiet" onClick={() => { setMode(mode === 'signup' ? 'signin' : 'signup'); setErr('') }}>{mode === 'signup' ? 'I have an account' : 'Make an account'}</button>
+        {onCancel && <button type="button" className="btn btn--quiet" onClick={onCancel}>Not now</button>}
+      </div>
+    </form>
+  )
+}
+
+// a gentle offer on the home page, only when online and only until it is dismissed
+function AccountNudge({ onOpen, onDismiss }) {
+  return (
+    <div className="nudge" role="note">
+      <span>Your progress is saved on this device. <strong>Sign up</strong> to keep it across devices.</span>
+      <div className="row">
+        <button className="btn btn--primary" onClick={() => onOpen('signup')}>Sign up</button>
+        <button className="btn btn--quiet" onClick={() => onOpen('signin')}>Sign in</button>
+        <button className="btn btn--quiet" onClick={onDismiss} aria-label="Not now">Not now</button>
+      </div>
+    </div>
+  )
+}
+
+// “not the latest version”: on the web a refresh fixes it; the desktop app needs a new download
+function UpdateNotice({ info, onClose }) {
+  return (
+    <div className="update" role="alert">
+      <span>{info.kind === 'reload' ? 'You are not running the latest app version. Refresh now to update.' : `A new version of Pedo Edhellen (${info.version}) is available.`}</span>
+      <div className="row">
+        {info.kind === 'reload'
+          ? <button className="btn btn--primary" onClick={applyUpdate}>Update</button>
+          : <Out href={DOWNLOAD_PAGE} className="btn btn--primary">Download</Out>}
+        <button className="btn btn--quiet" onClick={onClose} aria-label="Later">Later</button>
+      </div>
     </div>
   )
 }
@@ -369,7 +393,7 @@ function Week({ info }) {
   )
 }
 
-function Home({ course, state, profile, onOpen, onReview, onRead }) {
+function Home({ course, state, profile, onOpen, onReview, onRead, nudge }) {
   const due = dueKeys(state.srs, course.lang).filter((k) => course.byKey.has(k))
   const learned = Object.keys(state.srs).filter((k) => course.byKey.has(k)).length
   const day = today()
@@ -384,9 +408,11 @@ function Home({ course, state, profile, onOpen, onReview, onRead }) {
   return (
     <div className="home">
       <section className="hello">
-        <p className="hello__elv"><Elv lang="S">{hour < 5 || hour >= 21 ? 'Elen síla lúmenn’ omentielvo' : 'Mae govannen'}</Elv>, {profile.name}</p>
+        <p className="hello__elv"><Elv lang="S">{hour < 5 || hour >= 21 ? 'Elen síla lúmenn’ omentielvo' : 'Mae govannen'}</Elv>{profile.name ? `, ${profile.name}` : ''}</p>
         <p className="hello__lit">{hour < 5 || hour >= 21 ? '“A star shines on the hour of our meeting”, Quenya' : '“Well met”, as Glorfindel greets Aragorn'}</p>
       </section>
+
+      {nudge}
 
       <section className="today" aria-label="Today">
         <div className="today__ring">
@@ -869,7 +895,7 @@ function Notebook({ course, state }) {
 
 // ——— settings ———
 
-function Settings({ state, update, profile, sync, onRetakeQuiz, onSwitch, onReset }) {
+function Settings({ state, update, user, sync, online, onAccount, onRetakeQuiz, onReset }) {
   const [sure, setSure] = useState(false)
   const [perm, setPerm] = useState('')
   const r = state.settings.reminder
@@ -911,12 +937,32 @@ function Settings({ state, update, profile, sync, onRetakeQuiz, onSwitch, onRese
       </section>
 
       <section className="card">
-        <span className="label">Profile</span>
-        <p>Signed in as <strong>{profile.name}</strong> on this device. {sync === 'account' ? 'Progress also saved to your claude.ai account.' : ''}</p>
+        <span className="label">Your name</span>
+        <label className="field">For the greeting on the home page<input id="your-name" value={state.name || ''} maxLength={40} autoComplete="nickname"
+          onChange={(e) => update((s) => ({ ...s, name: e.target.value }))} /></label>
+      </section>
+
+      <section className="card">
+        <span className="label">Your progress</span>
+        {!accountsAvailable ? (
+          <p>Saved on this device.</p>
+        ) : user ? (
+          <>
+            <p>Signed in as <strong>{user.email}</strong>. {SYNC_SAYS[sync]}</p>
+            <div className="row"><button className="btn" onClick={() => account.signOut()}>Sign out</button></div>
+            <p className="hint">Signing out keeps your progress on this device too.</p>
+          </>
+        ) : online ? (
+          <>
+            <p>Saved on this device. Sign up to keep it across devices: your progress so far comes with you.</p>
+            <div className="row"><button className="btn btn--primary" onClick={() => onAccount('signup')}>Sign up</button><button className="btn" onClick={() => onAccount('signin')}>Sign in</button></div>
+          </>
+        ) : (
+          <p>Saved on this device. When you are online, you can sign up to keep your progress across devices.</p>
+        )}
         <div className="row">
-          <button className="btn" onClick={onSwitch}>Switch profile</button>
           {sure ? (
-            <><span>Erase all of {profile.name}’s progress?</span><button className="btn btn--danger" onClick={() => { onReset(); setSure(false) }}>Erase</button><button className="btn btn--quiet" onClick={() => setSure(false)}>Keep it</button></>
+            <><span>Erase all your progress{user ? ', here and in your account' : ''}?</span><button className="btn btn--danger" onClick={() => { onReset(); setSure(false) }}>Erase</button><button className="btn btn--quiet" onClick={() => setSure(false)}>Keep it</button></>
           ) : <button className="btn btn--quiet" onClick={() => setSure(true)}>Start again from nothing</button>}
         </div>
       </section>
@@ -935,18 +981,44 @@ function Settings({ state, update, profile, sync, onRetakeQuiz, onSwitch, onRese
 
 // ——— the app ———
 
-export default function App() {
-  const [profile, setProfile] = useState(undefined)
-  useEffect(() => { auth.current().then((p) => setProfile(p || null)) }, [])
-  if (profile === undefined) return <div className="app app--loading"><TitleStrip /></div>
-  if (!profile) return <div className="app"><TitleStrip /><main className="main"><Welcome onSignedIn={setProfile} /></main></div>
-  return <Signed key={profile.id} profile={profile} onSwitch={async () => { await auth.signOut(); setProfile(null) }} />
+const SYNC_SAYS = {
+  synced: 'Your progress is saved in your account.',
+  syncing: 'Saving to your account…',
+  offline: 'You are offline: progress is saved on this device and joins your account when you are back online.',
+  error: 'Could not reach your account just now; progress is saved on this device and will be joined later.',
+  device: '',
 }
 
-function Signed({ profile, onSwitch }) {
-  const [state, update, sync] = useProgress(profile.id)
+export default function App() {
+  const [user, setUser] = useState(undefined)
+  useEffect(() => {
+    account.current().then((u) => setUser(u || null)).catch(() => setUser(null))
+    return account.onChange((u) => setUser(u || null))
+  }, [])
+  // offline, or before the account check answers, the app starts straight away on this device's progress
+  return <Learner user={user || null} />
+}
+
+function Learner({ user }) {
+  const [state, update, sync] = useProgress(user)
   const [view, setView] = useState({ name: 'home' })
+  const [ask, setAsk] = useState(null)
+  const [fresher, setFresher] = useState(null)
+  const online = useOnline()
+  const profile = { id: user?.id || 'device', name: state?.name || user?.name || '' }
   useEffect(() => { if (state && !state.quiz && view.name === 'home' && !state.quizSkipped) setView({ name: 'quiz' }) }, [state, view.name])
+
+  // is there a newer version? on start, when the connection comes back, and when the app is reopened
+  useEffect(() => {
+    let last = 0
+    const check = () => { if (Date.now() - last < 5 * 60_000) return; last = Date.now(); checkForUpdate().then((u) => u && setFresher(u)) }
+    const seen = () => { if (document.visibilityState === 'visible') check() }
+    check()
+    window.addEventListener('online', check)
+    document.addEventListener('visibilitychange', seen)
+    const every = setInterval(check, 30 * 60_000)
+    return () => { window.removeEventListener('online', check); document.removeEventListener('visibilitychange', seen); clearInterval(every) }
+  }, [])
 
   // the reminder always says something current and useful, and nothing about streaks
   useEffect(() => {
@@ -959,6 +1031,7 @@ function Signed({ profile, onSwitch }) {
   }, [state])
 
   if (!state) return <div className="app app--loading"><TitleStrip /></div>
+  const openAccount = (mode) => setAsk(mode)
   const course = COURSES[state.track] || COURSES.S
   const go = (v) => { setView(v); document.querySelector('.shell .main')?.scrollTo({ top: 0, behavior: reduced() ? 'auto' : 'smooth' }) }
 
@@ -1021,7 +1094,8 @@ function Signed({ profile, onSwitch }) {
   const PAGE = { home: COURSE_NAME[course.id], reading: 'Reading room', notebook: 'Notebook', settings: 'Settings' }
   return (
     <div className="shell">
-      <TitleBar state={state} update={update} go={go} profile={profile} onSwitch={onSwitch} />
+      <TitleBar state={state} update={update} go={go} profile={profile} user={user} onAccount={openAccount} />
+      {fresher && <UpdateNotice info={fresher} onClose={() => setFresher(null)} />}
       <Rail view={view} go={go} due={due} onReview={() => (due ? openReview() : go({ name: 'home' }))} />
       <main className="main">
         {PAGE[view.name] && (
@@ -1030,7 +1104,7 @@ function Signed({ profile, onSwitch }) {
             <span className="pagehead__side">
               {view.name === 'home' && <Out href={TRANSLATOR_URL}>Translate anything in Lam Edhellen</Out>}
               {view.name === 'reading' && <span className="hint">{LANG_NAME[course.lang === 'T' ? 'S' : course.lang]} · lit words are ones you know</span>}
-              {view.name === 'settings' && <span className="hint">{profile.name} · {PLATFORM === 'desktop' ? 'saved on this computer' : sync === 'account' ? 'saved to your account' : 'saved in this browser'}</span>}
+              {view.name === 'settings' && <span className="hint">{user ? (sync === 'synced' ? 'saved in your account' : 'saved on this device, joining your account') : 'saved on this device'}</span>}
             </span>
           </div>
         )}
@@ -1041,15 +1115,18 @@ function Signed({ profile, onSwitch }) {
               onDone={(answers, rec) => { update((s) => ({ ...s, quiz: answers, track: rec.focus || rec.track, settings: { ...s.settings, goal: rec.goal } })); go({ name: 'home' }) }}
             />
           )}
-          {view.name === 'home' && <Home course={course} state={state} profile={profile} onOpen={openLesson} onReview={openReview} onRead={() => go({ name: 'reading' })} />}
+          {ask && <AccountForm start={ask} name={state.name} onDone={() => setAsk(null)} onCancel={() => setAsk(null)} />}
+          {view.name === 'home' && <Home course={course} state={state} profile={profile} onOpen={openLesson} onReview={openReview} onRead={() => go({ name: 'reading' })}
+            nudge={accountsAvailable && online && !user && !ask && !state.settings.noNudge
+              ? <AccountNudge onOpen={openAccount} onDismiss={() => update((s) => ({ ...s, settings: { ...s.settings, noNudge: true } }))} /> : null} />}
           {view.name === 'session' && <Session key={view.title + view.steps.length} title={view.title} lang={course.lang} initial={view.steps} onFinish={finish} onQuit={() => go({ name: 'home' })} />}
           {view.name === 'done' && <Done summary={view.summary} onHome={() => go({ name: 'home' })} onNext={view.next ? () => openLesson(view.next) : null} />}
           {view.name === 'reading' && <Reading lang={course.lang === 'T' ? 'S' : course.lang} state={state} onRead={readLine} />}
           {view.name === 'notebook' && <Notebook course={course} state={state} />}
           {view.name === 'settings' && (
-            <Settings state={state} update={update} profile={profile} sync={sync} onSwitch={onSwitch}
+            <Settings state={state} update={update} user={user} sync={sync} online={online} onAccount={openAccount}
               onRetakeQuiz={() => go({ name: 'quiz' })}
-              onReset={() => update((s) => ({ ...fresh(), track: s.track, quiz: s.quiz, settings: s.settings }))} />
+              onReset={() => update((s) => ({ ...fresh(), track: s.track, quiz: s.quiz, name: s.name, settings: s.settings, updatedAt: Date.now() }))} />
           )}
         </div>
       </main>
