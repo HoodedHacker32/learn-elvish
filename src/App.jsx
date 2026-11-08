@@ -304,15 +304,23 @@ function AccountNudge({ onOpen, onDismiss }) {
 
 // “not the latest version”: on the web a refresh fixes it; the desktop app needs a new download
 function UpdateNotice({ info, onClose }) {
+  const reload = info.kind === 'reload'
   return (
-    <div className="update" role="alert">
-      <span>{info.kind === 'reload' ? 'You are not running the latest app version. Refresh now to update.' : `A new version of Pedo Edhellen (${info.version}) is available.`}</span>
-      <div className="row">
-        {info.kind === 'reload'
-          ? <button className="btn btn--primary" onClick={applyUpdate}>Update</button>
-          : <Out href={DOWNLOAD_PAGE} className="btn btn--primary">Download</Out>}
-        <button className="btn btn--quiet" onClick={onClose} aria-label="Later">Later</button>
+    <div className="update" role="alertdialog" aria-labelledby="update-title" aria-describedby="update-text">
+      <span className="update__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7" /><path d="M20 4v7h-7" /></svg>
+      </span>
+      <div className="update__body">
+        <strong id="update-title" className="update__title">{reload ? 'A new version is ready' : `Pedo Edhellen ${info.version} is out`}</strong>
+        <p id="update-text" className="update__text">{reload ? 'You are not running the latest app version. Refresh now to update.' : 'You are not running the latest version. Download it to update.'}</p>
+        <div className="update__actions">
+          <button className="btn btn--quiet" onClick={onClose}>Later</button>
+          {reload
+            ? <button className="btn btn--primary" onClick={applyUpdate} autoFocus>Update now</button>
+            : <Out href={DOWNLOAD_PAGE} className="btn btn--primary">Download</Out>}
+        </div>
       </div>
+      <button className="update__close" onClick={onClose} aria-label="Close">×</button>
     </div>
   )
 }
