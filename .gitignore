@@ -1,0 +1,14 @@
+node_modules
+dist
+dist-desktop
+dist-pwa
+dist-check
+release
+.probe.json
+.claude
+dist-site
+.impeccable/review
+.impeccable/mocks
+.impeccable/questions
+.impeccable/decision-direction.json
+release-*

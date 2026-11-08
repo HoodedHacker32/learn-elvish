@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-04T00:00:00Z",
+  "title": "Design System: Pedo Edhellen site",
+  "extensions": {
+    "colorMeta": {
+      "enamel": { "role": "primary", "displayName": "Enamel Green", "canonical": "#8fcf96", "tonalRamp": ["#10251a", "#1f4a30", "#2f6f48", "#4a9a62", "#6cb97b", "#8fcf96", "#a6dcab", "#d4eed6"] },
+      "gold": { "role": "secondary", "displayName": "Elvish Gold", "canonical": "#dcb862", "tonalRamp": ["#3a2e12", "#5c4a1d", "#826b2b", "#b8995a", "#dcb862", "#ecd08a", "#f4e2b2", "#faf1d8"] },
+      "ground": { "role": "neutral", "displayName": "Cloak Ground", "canonical": "#2b352f", "tonalRamp": ["#171d19", "#222a25", "#2b352f", "#35413a", "#46544a", "#56655a", "#98a896", "#e6ece3"] },
+      "silver": { "role": "neutral", "displayName": "Silver", "canonical": "#e6ece3", "tonalRamp": ["#56655a", "#6f8073", "#98a896", "#bccab9", "#d0dccd", "#e6ece3", "#f0f4ee", "#f8faf7"] }
+    },
+    "typographyMeta": {
+      "specimen": { "displayName": "Specimen", "purpose": "The one gold Elvish figure word that opens each page." },
+      "headline": { "displayName": "Headline", "purpose": "Marcellus h1 and h2." },
+      "body": { "displayName": "Body", "purpose": "Figtree reading text at 64ch." },
+      "note": { "displayName": "Note", "purpose": "Margin notes and captions." },
+      "tengwar": { "displayName": "Tengwar", "purpose": "Alcarin Tengwar line inked beneath the figure word." }
+    },
+    "shadows": [
+      { "name": "plate", "value": "0 18px 40px -18px rgba(0, 0, 0, 0.6)", "purpose": "Under screenshot plates only." }
+    ],
+    "motion": [
+      { "name": "ease", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Shared with the app; hover lifts, note rules, arrow nudges." },
+      { "name": "settle", "value": "letter-spacing 0.06em to normal, 1.2s ease, second word delayed 0.12s", "purpose": "Figure word arrival on load." },
+      { "name": "reduced-motion", "value": "animation and transition none", "purpose": "All motion off under prefers-reduced-motion." }
+    ],
+    "breakpoints": [
+      { "name": "margin-collapse", "value": "920px" },
+      { "name": "narrow", "value": "560px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Press Action",
+      "kind": "button",
+      "refersTo": "press",
+      "description": "The one enamel action on a screen.",
+      "html": "<a class=\"ds-press\" href=\"#\">Open the web app</a>",
+      "css": ".ds-press { display: inline-flex; align-items: center; min-height: 2.9rem; padding: 0 1.3rem; border-radius: 3px 16px 3px 16px; background: #8fcf96; color: #10251a; text-decoration: none; font: 600 1rem Figtree, system-ui, sans-serif; transition: background 0.2s, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1); } .ds-press:hover { background: #a6dcab; transform: translateY(-1px); } .ds-press:focus-visible { outline: 2px solid #8fcf96; outline-offset: 3px; }"
+    },
+    {
+      "name": "Quiet Action",
+      "kind": "button",
+      "refersTo": "quiet",
+      "description": "Secondary door, outlined in Cloak Line.",
+      "html": "<a class=\"ds-quiet\" href=\"#\">Download for Windows</a>",
+      "css": ".ds-quiet { display: inline-flex; align-items: center; min-height: 2.9rem; padding: 0 1.15rem; border-radius: 3px 16px 3px 16px; border: 1px solid #56655a; color: #e6ece3; text-decoration: none; font: 600 1rem Figtree, system-ui, sans-serif; transition: border-color 0.2s, background 0.2s; } .ds-quiet:hover { border-color: #98a896; background: rgba(255,255,255,0.03); } .ds-quiet:focus-visible { outline: 2px solid #8fcf96; outline-offset: 3px; }"
+    },
+    {
+      "name": "Masthead Nav",
+      "kind": "nav",
+      "refersTo": "masthead",
+      "description": "Plain text links on Deep Ground; current page underlined in enamel.",
+      "html": "<nav class=\"ds-nav\"><a href=\"#\" aria-current=\"page\">Home</a><a href=\"#\">Course</a><a href=\"#\">Names</a></nav>",
+      "css": ".ds-nav { display: flex; gap: 1.6rem; background: #222a25; padding: 1.2rem 1rem; } .ds-nav a { color: #bccab9; text-decoration: none; font: 500 0.97rem Figtree, system-ui, sans-serif; padding-block: 0.4rem; border-bottom: 2px solid transparent; transition: color 0.2s; } .ds-nav a:hover { color: #e6ece3; } .ds-nav a[aria-current='page'] { color: #e6ece3; border-bottom-color: #8fcf96; }"
+    },
+    {
+      "name": "Figure Word",
+      "kind": "custom",
+      "refersTo": "specimen",
+      "description": "Gold Elvish specimen with footnote numerals, Tengwar line and pronunciation.",
+      "html": "<div class=\"ds-fig\"><p class=\"ds-spec\">Pedo<sup><a href=\"#\">1</a></sup> Edhellen<sup><a href=\"#\">2</a></sup></p><p class=\"ds-say\">Say it: <b>PEH-doh eh-THEL-len</b></p></div>",
+      "css": ".ds-fig { background: #2b352f; padding: 1.5rem; } .ds-spec { margin: 0; font: 400 4.5rem/1 Marcellus, Georgia, serif; color: #dcb862; } .ds-spec sup a { font: 600 0.9rem Figtree, sans-serif; color: #b8995a; text-decoration: none; padding: 0 0.1em; border-radius: 3px; } .ds-spec sup a:hover { background: #dcb862; color: #222a25; } .ds-say { margin: 0.35rem 0 0; color: #98a896; font: 500 0.97rem Figtree, sans-serif; } .ds-say b { color: #bccab9; }"
+    },
+    {
+      "name": "Margin Note",
+      "kind": "custom",
+      "refersTo": "note",
+      "description": "Numbered note with hairline above; lights gold when its call is active.",
+      "html": "<ol class=\"ds-notes\"><li><span class=\"ds-elv\">pedo</span> speak! Tolkien's command at the door of Moria.</li></ol>",
+      "css": ".ds-notes { list-style: none; margin: 0; padding: 0 0 0 1.25rem; border-left: 1px solid #46544a; counter-reset: note; font: 400 0.9rem/1.55 Figtree, sans-serif; color: #bccab9; background: #2b352f; } .ds-notes li { position: relative; padding-top: 0.6rem; } .ds-notes li::before { counter-increment: note; content: counter(note); position: absolute; top: -0.15rem; left: 0; font: 600 0.8rem/1 Figtree, sans-serif; color: #b8995a; } .ds-notes li::after { content: ''; position: absolute; left: 1.1rem; right: 0; top: 0.18rem; height: 1px; background: #46544a; } .ds-elv { display: block; font: 400 1.25rem/1.2 Marcellus, Georgia, serif; color: #dcb862; }"
+    },
+    {
+      "name": "Plate",
+      "kind": "card",
+      "refersTo": "plate",
+      "description": "Screenshot plate: 6px radius, line border, the system's only shadow.",
+      "html": "<figure class=\"ds-plate\"><div class=\"ds-img\"></div></figure>",
+      "css": ".ds-plate { margin: 0; background: #2b352f; padding: 1rem; } .ds-img { height: 120px; background: #35413a; border-radius: 6px; border: 1px solid #56655a; box-shadow: 0 18px 40px -18px rgba(0,0,0,0.6); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Annotated Page",
+    "overview": "The site is the Lorien cloak set as a scholarly page. It shares the visual family of the Pedo Edhellen app (src/styles.css) and the Lam Edhellen translator: a twilight green ground with a fine diagonal weave, silver text, gold for Elvish, enamel green only for things you press. What is new here is the apparatus. A reading column sits beside a ruled margin of numbered notes, and each page opens with one Elvish word at display scale as its figure, its words carrying superscript citation numerals that answer in the margin.",
+    "keyCharacteristics": [
+      "One reading measure (64ch) plus a 17.5rem ruled margin of notes, in a two-column leaf.",
+      "Gold is Elvish (and its footnote numerals); silver is everything read; enamel green is only what you press.",
+      "A figure word in Marcellus gold, with Tengwar inked beneath and a pronunciation line, opens each page.",
+      "Flat surfaces separated by 1px rules; the only shadow is under screenshot plates.",
+      "Tokens inherited from the app: colors, font stack, --leaf-r and --ease; the site adds --measure, --margin, --gap, gold-dim and gold-hover."
+    ],
+    "rules": [
+      { "name": "The Three Voices Rule", "body": "Gold means Elvish, enamel means press, silver means read. A color never takes a second job.", "section": "colors" },
+      { "name": "The Press Is One Rule", "body": "Each screen has one enamel press action; the other doors are quiet outlined.", "section": "colors" },
+      { "name": "The Figure Word Rule", "body": "Every page opens with one Elvish word or name in gold specimen type, its Tengwar beneath in Silver 2, and how to say it.", "section": "typography" },
+      { "name": "The Cited Word Rule", "body": "An Elvish word that needs a source takes a superscript numeral; its note sits in the margin beside it.", "section": "typography" },
+      { "name": "The Rules Not Boxes Rule", "body": "Separate with a hairline in Soft Line; do not enclose in a filled or shadowed container.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do open each page with one gold Elvish figure word, its Tengwar and a pronunciation line.",
+      "Do put sources in the margin of notes and link them with superscript numerals.",
+      "Do keep one enamel press per screen and draw other actions as quiet.",
+      "Do separate with 1px Soft Line rules and keep text to the 64ch measure.",
+      "Do keep Marcellus for Elvish and headings, Figtree for reading, and honor reduced motion."
+    ],
+    "donts": [
+      "Don't use cards, icon tiles, glows or filled containers for grouping; use the leaf, the rule and the list.",
+      "Don't spend gold on anything that is not Elvish, a citation or a link, or enamel on anything not pressable.",
+      "Don't add shadows beyond the plate.",
+      "Don't restyle the shared tokens here; change them in the app and carry them across."
+    ]
+  }
+}
