@@ -74,34 +74,34 @@ export const TENGWAR_COURSE = [
       {
         id: 't-four', title: 'Four shapes', letters: ['tinco', 'parma', 'calma', 'quesse'],
         teach: [
-          { h: 'Tolkien’s table', p: 'The Tengwar were made by Fëanor, Tolkien tells us, as a system. Each main letter is a stem (telco) and a bow (lúva). The four columns of Tolkien’s table are four places in the mouth: tinco at the teeth, parma at the lips, calma at the front of the roof of the mouth, quessë at the back.' },
-          { h: 'Read by shape', p: 'Bow on the right of the stem: tinco and parma. Bow on the left: calma and quessë. A closed bow marks the second and fourth columns: parma and quessë.' },
+          { h: 'Tolkien’s table', p: 'The Tengwar were made by Fëanor, Tolkien tells us, as a system. Each main letter is a stem (telco) and a bow (lúva). The four columns of Tolkien’s table are four places in the mouth: tinco at the teeth, parma at the lips, calma at the front of the roof of the mouth, quessë at the back.', diagram: { type: 'table' } },
+          { h: 'Read by shape', p: 'Bow on the right of the stem: tinco and parma. Bow on the left: calma and quessë. A closed bow marks the second and fourth columns: parma and quessë.', diagram: { type: 'anatomy' } },
         ],
       },
       {
         id: 't-voiced', title: 'Doubled bows', letters: ['ando', 'umbar', 'anga', 'ungwe'],
         teach: [
-          { h: 'Two bows, a voice', p: 'Double the bow and the sound is voiced: t becomes d, p becomes b. In Quenya these letters stand for nd, mb, ng and ngw, sounds that only come after a nasal.' },
+          { h: 'Two bows, a voice', p: 'Double the bow and the sound is voiced: t becomes d, p becomes b. In Quenya these letters stand for nd, mb, ng and ngw, sounds that only come after a nasal.', diagram: { type: 'anatomy', letters: ['tinco', 'ando', 'parma', 'umbar'] } },
         ],
       },
       {
         id: 't-raised', title: 'Raised stems', letters: ['thule', 'formen', 'harma', 'hwesta', 'anto', 'ampa', 'anca', 'unque'],
         teach: [
-          { h: 'A stem that rises', p: 'Raise the stem above the line and the sound is breathed: t becomes th, p becomes f. With two bows and a raised stem you get the voiced or nasal partner: anto, ampa, anca, unquë.' },
-          { h: 'One letter, more than one sound', p: 'Sindarin and Quenya use some letters differently. The app shows each letter’s sound in both, so you always know which you are reading.' },
+          { h: 'A stem that rises', p: 'Raise the stem above the line and the sound is breathed: t becomes th, p becomes f. With two bows and a raised stem you get the voiced or nasal partner: anto, ampa, anca, unquë.', diagram: { type: 'anatomy', letters: ['tinco', 'thule', 'ando', 'anto'] } },
+          { h: 'One letter, more than one sound', p: 'Sindarin and Quenya use some letters differently. The app shows each letter’s sound in both, so you always know which you are reading.', diagram: { type: 'table' } },
         ],
       },
       {
         id: 't-short', title: 'Short stems', letters: ['numen', 'malta', 'noldo', 'nwalme', 'ore', 'vala', 'anna', 'vilya'],
         teach: [
-          { h: 'Stems that shrink', p: 'Cut the stem short and the sound is a nasal (two bows: n, m, ng, nw) or a soft sound (one bow: r, v, y, w).' },
+          { h: 'Stems that shrink', p: 'Cut the stem short and the sound is a nasal (two bows: n, m, ng, nw) or a soft sound (one bow: r, v, y, w).', diagram: { type: 'anatomy', letters: ['ando', 'numen', 'tinco', 'ore'] } },
         ],
       },
       {
         id: 't-extra', title: 'The other letters', letters: ['romen', 'lambe', 'silme', 'silmeNuquerna', 'hyarmen', 'arda', 'alda', 'esse', 'hwestaSindarinwa', 'yanta', 'ure'],
         teach: [
-          { h: 'Outside the table', p: 'A few letters stand outside the four columns: rómen and órë are both r (rómen before a vowel), lambë is l, silmë is s and hyarmen is h.' },
-          { h: 'Turned over', p: 'Silmë is tall, so when a vowel sign has to sit on it, it is written upside down: silmë nuquerna, “silmë turned over”. Essë turns over the same way.' },
+          { h: 'Outside the table', p: 'A few letters stand outside the four columns: rómen and órë are both r (rómen before a vowel), lambë is l, silmë is s and hyarmen is h.', diagram: { type: 'anatomy', letters: ['romen', 'ore', 'lambe', 'silme', 'hyarmen'] } },
+          { h: 'Turned over', p: 'Silmë is tall, so when a vowel sign has to sit on it, it is written upside down: silmë nuquerna, “silmë turned over”. Essë turns over the same way.', diagram: { type: 'anatomy', letters: ['silme', 'silmeNuquerna', 'esse', 'esseNuquerna'] } },
         ],
       },
     ],
@@ -112,16 +112,16 @@ export const TENGWAR_COURSE = [
       {
         id: 't-tehtar', title: 'The five vowel signs', marks: ['a', 'e', 'i', 'o', 'u'], letters: ['shortCarrier', 'longCarrier'],
         teach: [
-          { h: 'Vowels are marks', p: 'In these modes a vowel is not a letter but a small sign written over one, a tehta: three dots for a, an acute for e, a dot for i, a curl one way for o and the other way for u.' },
-          { h: 'The carriers', p: 'When there is no consonant for a vowel to sit on, it goes on a carrier: a short stem for a short vowel, a tall one for a long vowel.' },
+          { h: 'Vowels are marks', p: 'In these modes a vowel is not a letter but a small sign written over one, a tehta: three dots for a, an acute for e, a dot for i, a curl one way for o and the other way for u.', diagram: { type: 'signs', signs: ['threeDots', 'acute', 'dot', 'rightCurl', 'leftCurl'] } },
+          { h: 'The carriers', p: 'When there is no consonant for a vowel to sit on, it goes on a carrier: a short stem for a short vowel, a tall one for a long vowel.', diagram: { type: 'anatomy', letters: ['shortCarrier', 'longCarrier'] } },
         ],
       },
       {
         id: 't-where', title: 'Where the signs go', marks: ['y', 'nasal', 'double'],
         words: [['elen', 'star', 'Q'], ['alda', 'tree', 'Q'], ['mellon', 'friend', 'S'], ['aran', 'king', 'S']],
         teach: [
-          { h: 'Before or after', p: 'In Quenya a vowel sign sits on the consonant before it: in elen, the e after l sits on lambë. In Sindarin it sits on the consonant after it: in mellon, the e before ll sits on lambë.' },
-          { h: 'Bars', p: 'A bar below a letter doubles it (the ll of mellon). A bar above shows an n or m before it.' },
+          { h: 'Before or after', p: 'In Quenya a vowel sign sits on the consonant before it: in elen, the e after l sits on lambë. In Sindarin it sits on the consonant after it: in mellon, the e before ll sits on lambë.', diagram: { type: 'words', words: [['elen', 'Q'], ['mellon', 'S']] } },
+          { h: 'Bars', p: 'A bar below a letter doubles it (the ll of mellon). A bar above shows an n or m before it.', diagram: { type: 'signs', signs: ['doubler', 'nasalizer'] } },
         ],
       },
     ],
@@ -131,12 +131,12 @@ export const TENGWAR_COURSE = [
     lessons: [
       {
         id: 't-s1', title: 'Sindarin words', words: [['mellon', 'friend', 'S'], ['aran', 'king', 'S'], ['calad', 'light', 'S'], ['edhel', 'elf', 'S'], ['Ithil', 'moon', 'S'], ['sîr', 'river', 'S'], ['gil', 'star', 'S'], ['cor', 'ring', 'S']],
-        teach: [{ h: 'Spelling Sindarin', p: 'Sindarin is written as it sounds. Remember: each vowel sign sits on the consonant after it, and a vowel at the end of a word goes on a carrier.' }],
-      },
+        teach: [{ h: 'Spelling Sindarin', p: 'Sindarin is written as it sounds. Remember: each vowel sign sits on the consonant after it, and a vowel at the end of a word goes on a carrier.', diagram: { type: 'words', words: [['aran', 'S'], ['calad', 'S']] } }],
+     },
       {
         id: 't-s2', title: 'More Sindarin', words: [['galadh', 'tree', 'S'], ['annon', 'gate', 'S'], ['barad', 'tower', 'S'], ['lass', 'leaf', 'S'], ['megil', 'sword', 'S'], ['estel', 'hope', 'S'], ['taur', 'forest', 'S'], ['amon', 'hill', 'S']],
-        teach: [{ h: 'Two letters as one', p: 'dh is anto and ch is harma, one letter each. A doubled letter takes a bar below. In taur the u after a is written with úrë.' }],
-      },
+        teach: [{ h: 'Two letters as one', p: 'dh is anto and ch is harma, one letter each. A doubled letter takes a bar below. In taur the u after a is written with úrë.', diagram: { type: 'words', words: [['galadh', 'S'], ['taur', 'S']] } }],
+     },
       {
         id: 't-s3', title: 'Sindarin lines', words: [['Mae govannen', 'well met', 'S'], ['Pedo mellon a minno', 'speak, friend, and enter', 'S'], ['Le melin', 'I love you', 'S'], ['Lacho calad! Drego morn!', 'flame light! flee night!', 'S'], ['A Elbereth Gilthoniel', 'O Elbereth Star-kindler', 'S']],
         teach: [{ h: 'Whole lines', p: 'These are lines you know from the Sindarin course. Read them word by word; the punctuation is Tolkien’s own dots.' }],
@@ -148,12 +148,12 @@ export const TENGWAR_COURSE = [
     lessons: [
       {
         id: 't-q1', title: 'Quenya words', words: [['elen', 'star', 'Q'], ['alda', 'tree', 'Q'], ['lómë', 'night', 'Q'], ['Isil', 'moon', 'Q'], ['Anar', 'sun', 'Q'], ['Elda', 'elf', 'Q'], ['aran', 'king', 'Q'], ['tári', 'queen', 'Q']],
-        teach: [{ h: 'Spelling Quenya', p: 'In Quenya each vowel sign sits on the consonant before it. A long vowel (á, ó) sits on the long carrier.' }],
-      },
+        teach: [{ h: 'Spelling Quenya', p: 'In Quenya each vowel sign sits on the consonant before it. A long vowel (á, ó) sits on the long carrier.', diagram: { type: 'words', words: [['elen', 'Q'], ['lómë', 'Q']] } }],
+     },
       {
         id: 't-q2', title: 'More Quenya', words: [['lassë', 'leaf', 'Q'], ['macil', 'sword', 'Q'], ['corma', 'ring', 'Q'], ['ondo', 'stone', 'Q'], ['lúmë', 'hour', 'Q'], ['mára', 'good', 'Q'], ['calima', 'bright', 'Q'], ['meldo', 'friend', 'Q']],
-        teach: [{ h: 'nd, mb, ld', p: 'Quenya’s nd is ando, mb is umbar and ld is alda: one letter for two sounds.' }],
-      },
+        teach: [{ h: 'nd, mb, ld', p: 'Quenya’s nd is ando, mb is umbar and ld is alda: one letter for two sounds.', diagram: { type: 'words', words: [['ondo', 'Q'], ['alda', 'Q']] } }],
+     },
       {
         id: 't-q3', title: 'Quenya lines', words: [['Elen síla lúmenn’ omentielvo', 'a star shines on the hour of our meeting', 'Q'], ['Namárië!', 'farewell!', 'Q'], ['Aiya Eärendil Elenion Ancalima!', 'hail Eärendil, brightest of stars!', 'Q'], ['Auta i lómë!', 'the night is passing!', 'Q']],
         teach: [{ h: 'Tolkien’s lines', p: 'Lines Tolkien wrote in Quenya. Look for the long carrier in síla and lúmenn, and rómen in Namárië.' }],
@@ -166,18 +166,18 @@ export const TENGWAR_COURSE = [
       {
         id: 't-e1', title: 'English letters', words: [['march', 'march', 'E'], ['west', 'west', 'E'], ['happy', 'happy', 'E'], ['ring', 'ring', 'E'], ['return', 'return', 'E'], ['wish', 'wish', 'E'], ['just', 'just', 'E'], ['there', 'there', 'E']],
         teach: [
-          { h: 'Spelling, not sound', p: 'Tolkien wrote English in Tengwar letter by letter, following the spelling. Some letters change job: calma is ch, quessë is k and c, anga is j, ungwë is g, harma is sh and nwalmë is ng.' },
-          { h: 'Signs on the next letter', p: 'As in Sindarin, a vowel sign sits on the letter after it. A silent e at the end is a dot below the letter before it, and th in “this” or “there” is anto.' },
+          { h: 'Spelling, not sound', p: 'Tolkien wrote English in Tengwar letter by letter, following the spelling. Some letters change job: calma is ch, quessë is k and c, anga is j, ungwë is g, harma is sh and nwalmë is ng.', diagram: { type: 'words', words: [['march', 'E'], ['wish', 'E']] } },
+          { h: 'Signs on the next letter', p: 'As in Sindarin, a vowel sign sits on the letter after it. A silent e at the end is a dot below the letter before it, and th in “this” or “there” is anto.', diagram: { type: 'words', words: [['west', 'E'], ['there', 'E']] } },
         ],
       },
       {
         id: 't-e2', title: 'Shorthands', words: [['the', 'the', 'E'], ['of', 'of', 'E'], ['and', 'and', 'E'], ['of the', 'of the', 'E'], ['the lord of the rings', 'the lord of the rings', 'E'], ['want', 'want', 'E']],
-        teach: [{ h: 'Tolkien’s shortcuts', p: 'Tolkien wrote “the” as ando with a stem reaching up and down, “of” as umbar the same way, and “of the” as “of” with a bar below. “And” is ando with a bar above.' }],
-      },
+        teach: [{ h: 'Tolkien’s shortcuts', p: 'Tolkien wrote “the” as ando with a stem reaching up and down, “of” as umbar the same way, and “of the” as “of” with a bar below. “And” is ando with a bar above.', diagram: { type: 'words', words: [['the lord of the rings', 'E']] } }],
+     },
       {
         id: 't-e3', title: 'Write your name', name: true, words: [['Frodo', 'Frodo', 'E'], ['Samwise', 'Samwise', 'E'], ['Bilbo', 'Bilbo', 'E'], ['Gandalf', 'Gandalf', 'E'], ['Aragorn', 'Aragorn', 'E'], ['Tolkien', 'Tolkien', 'E']],
-        teach: [{ h: 'Names in Tengwar', p: 'Names are spelt like any English word. Practise on these, then see your own name, and save it as a picture if you like.' }],
-      },
+        teach: [{ h: 'Names in Tengwar', p: 'Names are spelt like any English word. Practise on these, then see your own name, and save it as a picture if you like.', diagram: { type: 'words', words: [['Frodo', 'E']] } }],
+     },
     ],
   },
   {

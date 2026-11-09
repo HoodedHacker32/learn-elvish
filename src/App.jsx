@@ -5,6 +5,7 @@ import { checkTyped, checkTengwar, sameWords } from './learn/check.js'
 import { TengwarTyper, TengwarDesk, TakeAway } from './tengwar-ui.jsx'
 import { Writing } from './tengwar/Writing.jsx'
 import { Guide } from './tengwar/Guide.jsx'
+import { Diagram, LetterPlate, WordMap } from './tengwar/diagrams.jsx'
 import { toTengwar } from '../../LoTR Elvish Translator/src/engine/tengwar.js'
 import { dueKeys, grade, introduce, strength, today } from './learn/srs.js'
 import { earn, fresh, useProgress } from './learn/store.js'
@@ -531,6 +532,7 @@ function Teach({ note, lang }) {
       <span className="label">Learn</span>
       <h2 className="card__h">{note.h}</h2>
       <p className="card__p">{note.p}</p>
+      {note.diagram && <Diagram d={note.diagram} />}
       {note.ex.length > 0 && (
         <ul className="examples">
           {note.ex.map(([el, en]) => <li key={el}><Elv lang={lang}>{el}</Elv><span className="examples__en">{en}</span></li>)}
@@ -547,7 +549,9 @@ function LearnTengwar({ item }) {
   return (
     <div className="card card--learn">
       <span className="label">{what}</span>
-      <p className="tengwar tengwar--hero" aria-label="In Tengwar">{item.tengwar}</p>
+      {item.kind === 'letter' ? <LetterPlate id={item.id} size="l" label="describe" />
+        : item.kind === 'tword' ? <WordMap tengwar={item.tengwar} lang={item.lang} latin={item.el} />
+          : <p className="tengwar tengwar--hero" aria-label="In Tengwar">{item.tengwar}</p>}
       {item.kind === 'letter' ? (
         <>
           <p className="learn__el"><span className="elv elv--big">{item.el}</span></p>

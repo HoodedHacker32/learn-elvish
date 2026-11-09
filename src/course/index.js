@@ -142,7 +142,9 @@ function buildTengwar() {
         })
       }
       const lesson = {
-        ...l, teach: l.teach.map((t) => ({ ex: [], ...t })), lang: 'T', course: 'T', unit: u.unit, unitIndex: ui, items,
+        // a diagram that names no letters shows this lesson's (lit in the table, drawn in the anatomy plate)
+        ...l, teach: l.teach.map((t) => ({ ex: [], ...t, ...(t.diagram ? { diagram: { ...t.diagram, letters: t.diagram.letters || l.letters, highlight: t.diagram.highlight || l.letters } } : {}) })),
+        lang: 'T', course: 'T', unit: u.unit, unitIndex: ui, items,
         letterPool: [...lettersSoFar],
       }
       lessons.push(lesson)
