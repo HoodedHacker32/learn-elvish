@@ -31,6 +31,10 @@
 
 * { box-sizing: border-box; }
 html, body { margin: 0; }
+/* The app fills exactly the visible screen and only its content scrolls. On an installed iPad or iPhone web app,
+   100vh is the whole screen including the status bar, so the app was one status bar too tall and the page
+   itself could scroll up under the clock; dvh is the part you can actually see. */
+html:has(.shell), html:has(.shell) body { height: 100%; overflow: hidden; overscroll-behavior: none; }
 body {
   background-color: var(--ground);
   background-image:
@@ -56,7 +60,7 @@ h1, h2, h3 { text-wrap: balance; }
 a { color: var(--enamel); }
 cite { font-style: italic; color: var(--silver-3); }
 
-.app { min-height: 100vh; display: flex; flex-direction: column; }
+.app { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
 .app--loading { background: var(--ground); }
 .main {
   flex: 1; width: 100%; max-width: 780px; margin: 0 auto;
@@ -68,13 +72,13 @@ cite { font-style: italic; color: var(--silver-3); }
 @keyframes enter { from { opacity: 0; transform: translateY(10px); } }
 
 /* ——— the shell: title bar across the top, a rail of sections down the left (like Teams) ——— */
-.shell { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); height: 100vh; }
-.shell .main { grid-column: 2; grid-row: 2; overflow-y: auto; max-width: none; margin: 0; padding: 0 0 56px; scroll-behavior: smooth; }
+.shell { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); height: 100vh; height: 100dvh; }
+.shell .main { grid-column: 2; grid-row: 2; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; max-width: none; margin: 0; padding: 0 env(safe-area-inset-right, 0px) calc(56px + env(safe-area-inset-bottom, 0px)) 0; scroll-behavior: smooth; }
 .shell .main > * { max-width: 820px; margin-inline: auto; }
 
 .titlebar {
   grid-column: 1 / -1; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px;
-  height: 52px; padding-left: max(14px, env(safe-area-inset-left, 0px));
+  height: calc(52px + env(safe-area-inset-top, 0px)); padding-left: max(14px, env(safe-area-inset-left, 0px));
   padding-right: max(14px, env(safe-area-inset-right, 0px)); padding-top: env(safe-area-inset-top, 0px);
   box-sizing: content-box;
   background: var(--ground-deep); border-bottom: 1px solid var(--line-soft); position: relative; z-index: 6;
@@ -100,7 +104,9 @@ cite { font-style: italic; color: var(--silver-3); }
 .me__menu button:hover { background: var(--panel-hi); color: var(--silver); }
 
 .rail {
-  grid-column: 1; grid-row: 2; display: flex; flex-direction: column; gap: 2px; width: 88px; padding: 8px 6px 12px;
+  grid-column: 1; grid-row: 2; display: flex; flex-direction: column; gap: 2px; width: 88px;
+  /* clear of the home indicator and the window corner on iPad */
+  padding: 8px 6px max(12px, calc(env(safe-area-inset-bottom, 0px) + 8px)) max(6px, env(safe-area-inset-left, 0px));
   background: var(--ground-deep); border-right: 1px solid var(--line-soft); overflow: hidden;
   transition: width 0.3s var(--ease);
 }
@@ -462,7 +468,7 @@ cite { font-style: italic; color: var(--silver-3); }
 
 /* mid widths: the course switcher moves under the logo row */
 @media (max-width: 860px) {
-  .titlebar { grid-template-columns: 1fr auto; height: auto; min-height: 52px; padding-block: 6px; row-gap: 6px; }
+  .titlebar { grid-template-columns: 1fr auto; height: auto; min-height: 52px; padding-top: calc(6px + env(safe-area-inset-top, 0px)); padding-bottom: 6px; row-gap: 6px; }
   .titlebar .track { grid-column: 1 / -1; grid-row: 2; justify-self: center; margin-bottom: 4px; }
   .titlebar__end { grid-row: 1; grid-column: 2; }
 }
