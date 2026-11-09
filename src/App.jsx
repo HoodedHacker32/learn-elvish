@@ -4,6 +4,7 @@ import { buildLesson, buildReview, buildTengwarLesson, buildTengwarReview } from
 import { checkTyped, checkTengwar, sameWords } from './learn/check.js'
 import { TengwarTyper, TengwarDesk, TakeAway } from './tengwar-ui.jsx'
 import { Writing } from './tengwar/Writing.jsx'
+import { Guide } from './tengwar/Guide.jsx'
 import { toTengwar } from '../../LoTR Elvish Translator/src/engine/tengwar.js'
 import { dueKeys, grade, introduce, strength, today } from './learn/srs.js'
 import { earn, fresh, useProgress } from './learn/store.js'
@@ -402,7 +403,7 @@ function Week({ info }) {
   )
 }
 
-function Home({ course, state, profile, onOpen, onReview, onRead, onWrite, nudge }) {
+function Home({ course, state, profile, onOpen, onReview, onRead, onWrite, onGuide, nudge }) {
   const due = dueKeys(state.srs, course.lang).filter((k) => course.byKey.has(k))
   const learned = Object.keys(state.srs).filter((k) => course.byKey.has(k)).length
   const day = today()
@@ -450,6 +451,16 @@ function Home({ course, state, profile, onOpen, onReview, onRead, onWrite, nudge
             <p className="hint">Watch each letter written stroke by stroke, trace it, then write it from memory. Best with a pen, stylus or touchscreen.</p>
           </div>
           <button className="btn btn--primary" onClick={onWrite}>Practise writing</button>
+        </section>
+      )}
+      {course.id === 'T' && (
+        <section className="card write-card">
+          <div>
+            <span className="label">On your own devices</span>
+            <h2 className="card__h">Typing and sharing Tengwar</h2>
+            <p className="hint">Which fonts to install, how to type Tengwar on a computer, phone or tablet, where it shows up, and how to check a transcriber.</p>
+          </div>
+          <button className="btn" onClick={onGuide}>Read the guide</button>
         </section>
       )}
       {course.id === 'T' && <TengwarDesk />}
@@ -1110,7 +1121,7 @@ function Learner({ user }) {
   })
 
   const due = dueKeys(state.srs, course.lang).filter((k) => course.byKey.has(k)).length
-  const PAGE = { home: COURSE_NAME[course.id], reading: 'Reading room', notebook: 'Notebook', settings: 'Settings', writing: 'Writing practice' }
+  const PAGE = { home: COURSE_NAME[course.id], reading: 'Reading room', notebook: 'Notebook', settings: 'Settings', writing: 'Writing practice', guide: 'Tengwar on your devices' }
   return (
     <div className="shell">
       <TitleBar state={state} update={update} go={go} profile={profile} user={user} onAccount={openAccount} />
@@ -1135,12 +1146,13 @@ function Learner({ user }) {
             />
           )}
           {ask && <AccountForm start={ask} name={state.name} onDone={() => setAsk(null)} onCancel={() => setAsk(null)} />}
-          {view.name === 'home' && <Home course={course} state={state} profile={profile} onOpen={openLesson} onReview={openReview} onRead={() => go({ name: 'reading' })} onWrite={() => go({ name: 'writing' })}
+          {view.name === 'home' && <Home course={course} state={state} profile={profile} onOpen={openLesson} onReview={openReview} onRead={() => go({ name: 'reading' })} onWrite={() => go({ name: 'writing' })} onGuide={() => go({ name: 'guide' })}
             nudge={accountsAvailable && online && !user && !ask && !state.settings.noNudge
               ? <AccountNudge onOpen={openAccount} onDismiss={() => update((s) => ({ ...s, settings: { ...s.settings, noNudge: true } }))} /> : null} />}
           {view.name === 'session' && <Session key={view.title + view.steps.length} title={view.title} lang={course.lang} initial={view.steps} onFinish={finish} onQuit={() => go({ name: 'home' })} />}
           {view.name === 'done' && <Done summary={view.summary} onHome={() => go({ name: 'home' })} onNext={view.next ? () => openLesson(view.next) : null} />}
           {view.name === 'writing' && <Writing state={state} update={update} />}
+          {view.name === 'guide' && <Guide />}
           {view.name === 'reading' && <Reading lang={course.lang === 'T' ? 'S' : course.lang} state={state} onRead={readLine} />}
           {view.name === 'notebook' && <Notebook course={course} state={state} />}
           {view.name === 'settings' && (

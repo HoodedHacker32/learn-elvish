@@ -246,3 +246,19 @@ table.plain td:last-child { color: var(--silver-2); }
   *, *::before, *::after { animation: none !important; transition: none !important; }
   html { scroll-behavior: auto; }
 }
+
+/* ——— the Tengwar guide ——— */
+.guide-list { margin: 0 0 1rem; padding-left: 1.2rem; display: grid; gap: 0.6rem; line-height: 1.6; color: var(--silver-2); }
+.guide-list b { color: var(--silver); }
+.aside-note { border-left: 2px solid rgba(220, 184, 98, 0.5); padding-left: 0.9rem; color: var(--silver-2); font-size: 0.95rem; }
+.keychart { display: grid; gap: 1.2rem; overflow-x: auto; margin: 0.5rem 0 1rem; }
+.keychart table { border-collapse: collapse; }
+.keychart__letters td { padding: 0.4rem 0.6rem; text-align: center; border: 1px solid var(--line-soft); min-width: 4.4rem; }
+.keychart .tw { display: block; font-family: 'Alcarin Tengwar', serif; font-size: 1.9rem; line-height: 1.3; color: var(--silver); }
+.keychart__signs .tw { display: inline-block; font-size: 1.6rem; vertical-align: middle; margin-right: 0.4rem; }
+.keychart kbd { display: inline-block; min-width: 1.6rem; padding: 0.1rem 0.45rem; border-radius: 6px; border: 1px solid var(--line); background: rgba(0, 0, 0, 0.18); font: 600 0.9rem ui-monospace, Consolas, monospace; color: var(--silver); }
+.keychart__name { display: block; font-size: 0.7rem; color: var(--silver-3); margin-top: 0.2rem; }
+.keychart__signs th, .keychart__signs td { padding: 0.4rem 0.6rem; border: 1px solid var(--line-soft); text-align: center; font-weight: 500; }
+.keychart__signs thead th { font-size: 0.75rem; color: var(--silver-3); }
+.keychart__signs tbody th { text-align: left; white-space: nowrap; color: var(--silver-2); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

@@ -4,9 +4,12 @@
 //   {{tw:Text|S}} {{say:Text|S}}     Tengwar and pronunciation from the translator's own engine
 //   {{icon:name}} {{mark:origin}}    drawn icons and the provenance leaf
 //   {{size}}                         the size of the newest Windows build
+//   {{guide}}                        the Tengwar guide, from src/course/tengwar-guide.js (the app shows the same)
 //   {{download}}                     the Windows build on the repository's latest GitHub release
 import { readFileSync, writeFileSync, mkdirSync, copyFileSync, readdirSync, statSync, existsSync, cpSync, rmSync } from 'node:fs'
-import { toTengwar } from '../../LoTR Elvish Translator/src/engine/tengwar.js'
+import { toTengwar, CSUR, ANNATAR_LETTERS, ANNATAR_TEHTAR } from '../../LoTR Elvish Translator/src/engine/tengwar.js'
+import { GUIDE, inline, KEY_ROWS, KEY_SIGNS } from '../src/course/tengwar-guide.js'
+import { LETTERS } from '../src/course/tengwar.js'
 import { respellLine } from '../../LoTR Elvish Translator/src/engine/pronounce.js'
 
 const here = (p) => new URL(p, import.meta.url)
@@ -33,7 +36,7 @@ const icon = (n) => `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">${
 const mark = (o) => `<svg class="mk mk--${o}" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 13.5C2.5 7 6.5 2.5 13.5 2.5c0 7-4.5 11-11 11z"/><path d="M3 13 11 5"/></svg>`
 const LEAF = '<svg viewBox="0 0 512 512" aria-hidden="true"><path fill="#dcb862" d="M120 400C120 228 228 112 400 112c0 176-110 288-280 288z"/><path d="M138 384 352 168" stroke="#222a25" stroke-width="26" stroke-linecap="round"/></svg>'
 
-const NAV = [['course', 'course.html', 'The course'], ['names', 'names.html', 'The names'], ['translator', 'translator.html', 'Lam Edhellen'], ['get', 'get.html', 'Get the app']]
+const NAV = [['course', 'course.html', 'The course'], ['names', 'names.html', 'The names'], ['tengwar', 'tengwar.html', 'Tengwar'], ['translator', 'translator.html', 'Lam Edhellen'], ['get', 'get.html', 'Get the app']]
 
 const head = (key, title, desc) => `<!doctype html>
 <html lang="en">
@@ -90,6 +93,32 @@ const END = `</main>
 </html>
 `
 
+// ——— the Tengwar guide, as HTML ———
+const esc = (t) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;')
+const piece = (x) => (x.bold ? `<b>${x.parts.map(piece).join('')}</b>`
+  : x.href ? `<a href="${x.href}"${x.href.startsWith('http') ? ' rel="noopener"' : ''}>${esc(x.text)}</a>` : esc(x.text))
+const rich = (t) => inline(t).map(piece).join('')
+const G = (cp) => String.fromCharCode(cp)
+const signFace = (id) => (['dotBelow', 'nasalizer', 'doubler'].includes(id) ? G(CSUR.tinco) : G(CSUR.shortCarrier)) + G(CSUR[id])
+const keyName = (id) => LETTERS[id]?.name || { extAndo: '“the”', extUmbar: '“of”' }[id] || id
+const keyChart = () => `<div class="keychart">
+<table class="keychart__letters"><caption class="sr-only">Tengwar Annatar keys for each letter</caption><tbody>
+${KEY_ROWS.map((row) => `<tr>${row.map((id) => `<td><span class="tw">${G(CSUR[id])}</span><kbd>${esc(ANNATAR_LETTERS[id])}</kbd><span class="keychart__name">${keyName(id)}</span></td>`).join('')}</tr>`).join('\n')}
+</tbody></table>
+<table class="keychart__signs"><caption class="sr-only">Tengwar Annatar keys for the vowel signs and bars</caption>
+<thead><tr><th>Sign</th><th>Two bows</th><th>One bow</th><th>Raised stem</th><th>Carrier</th></tr></thead><tbody>
+${KEY_SIGNS.map(([id, label]) => `<tr><th scope="row"><span class="tw">${signFace(id)}</span> ${label}</th>${[...ANNATAR_TEHTAR[id]].map((k) => `<td><kbd>${esc(k)}</kbd></td>`).join('')}</tr>`).join('\n')}
+</tbody></table></div>`
+const guideHtml = () => GUIDE.map((sec) => `  <section class="leaf" aria-labelledby="g-${sec.id}">
+    <div class="text">
+      <h2 id="g-${sec.id}">${esc(sec.h)}</h2>
+${sec.blocks.map((b) => b.p ? `      <p>${rich(b.p)}</p>`
+    : b.note ? `      <p class="aside-note">${rich(b.note)}</p>`
+      : b.list || b.steps ? `      <ul class="guide-list">${(b.list || b.steps).map((t) => `<li>${rich(t)}</li>`).join('')}</ul>`
+        : b.keys ? keyChart() : '').join('\n')}
+    </div>
+  </section>`).join('\n')
+
 const pages = readdirSync(here('./')).filter((f) => f.endsWith('.html'))
 for (const f of pages) {
   const html = readFileSync(here(f), 'utf8')
@@ -101,6 +130,7 @@ for (const f of pages) {
     .replace(/\{\{mark:(\w+)\}\}/g, (_, o) => mark(o))
     .replaceAll('{{size}}', size)
     .replaceAll('{{download}}', DOWNLOAD)
+    .replace('{{guide}}', guideHtml)
   if (/\{\{/.test(html)) throw new Error(`${f}: unreplaced token ${html.match(/\{\{[^}]*\}\}/)[0]}`)
   writeFileSync(new URL(f, out), html)
 }

@@ -641,3 +641,27 @@ cite { font-style: italic; color: var(--silver-3); }
 .writing__word.is-on { border-color: var(--enamel); color: var(--silver); }
 .writing__word.is-traced { background: var(--ground-deep); }
 .writing__word.is-done { border-color: rgba(220, 184, 98, 0.6); background: var(--gold-soft); color: var(--silver); }
+
+/* ——— the Tengwar guide ——— */
+.guide { display: grid; gap: 16px; max-width: 860px; }
+.guide__lede { margin: 0; color: var(--silver-2); font-size: 17px; }
+.guide__toc { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.guide__toc a { color: var(--gold); font-size: 14px; text-decoration: none; }
+.guide__toc a:hover { text-decoration: underline; }
+.guide__section { display: grid; gap: 10px; scroll-margin-top: 80px; }
+.guide__section .card__h { margin: 0; }
+.guide__section p, .guide__section li { line-height: 1.55; color: var(--silver-2); }
+.guide__section strong { color: var(--silver); }
+.guide__section ul { margin: 0; padding-left: 20px; display: grid; gap: 8px; }
+.guide__note { border-left: 2px solid rgba(220, 184, 98, 0.5); padding-left: 12px; }
+.keychart { display: grid; gap: 16px; overflow-x: auto; }
+.keychart table { border-collapse: collapse; }
+.keychart__letters td { padding: 6px 10px; text-align: center; border: 1px solid var(--line-soft); min-width: 74px; }
+.keychart__letters .tengwar { display: block; font-size: 30px; line-height: 1.3; color: var(--silver); }
+.keychart kbd { display: inline-block; min-width: 26px; padding: 2px 7px; border-radius: 6px; border: 1px solid var(--line); background: var(--ground-deep); font: 600 14px ui-monospace, Consolas, monospace; color: var(--silver); }
+.keychart__name { display: block; font-size: 11px; color: var(--silver-3); margin-top: 3px; }
+.keychart__signs th, .keychart__signs td { padding: 6px 10px; border: 1px solid var(--line-soft); text-align: center; font-weight: 500; }
+.keychart__signs thead th { font-size: 12px; color: var(--silver-3); }
+.keychart__signs tbody th { text-align: left; white-space: nowrap; color: var(--silver-2); }
+.keychart__signs .tengwar { font-size: 26px; vertical-align: middle; margin-right: 6px; color: var(--silver); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

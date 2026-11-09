@@ -192,7 +192,7 @@ export function TakeAway({ tengwar, latin }) {
         <button className="btn" type="button" disabled={!tengwar} onClick={async () => { const r = await deliver(await tengwarPng(tengwar), fileName(latin) + '.png'); if (r !== 'cancelled') say(r === 'shared' ? 'Shared.' : 'Saved as a picture.') }}>Save as picture</button>
         <button className="btn btn--quiet" type="button" disabled={!tengwar} onClick={async () => { const r = await deliver(await tengwarSvg(tengwar), fileName(latin) + '.svg'); if (r !== 'cancelled') say('Saved as an SVG, which scales to any size.') }}>SVG</button>
         <button className="btn btn--quiet" type="button" disabled={!tengwar} onClick={async () => say((await copy(tengwar)) ? 'Copied as Tengwar text. It shows where a Tengwar font such as Alcarin Tengwar is installed.' : 'Copying is not allowed here.')}>Copy text</button>
-        <button className="btn btn--quiet" type="button" disabled={!tengwar} onClick={async () => say((await copy(toAnnatar(tengwar))) ? 'Copied for Tengwar Annatar. Paste it into Word or Docs and set the font to Tengwar Annatar.' : 'Copying is not allowed here.')}>Copy for Annatar</button>
+        <button className="btn btn--quiet" type="button" disabled={!tengwar} onClick={async () => say((await copy(toAnnatar(tengwar))) ? 'Copied for Tengwar Annatar. Paste it into Word or Pages and set the font to Tengwar Annatar (Google Docs cannot use it: send a picture there).' : 'Copying is not allowed here.')}>Copy for Annatar</button>
       </div>
       <p className="takeaway__msg" aria-live="polite">{msg}</p>
     </div>
