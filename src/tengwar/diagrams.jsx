@@ -2,6 +2,7 @@
 // the guide lines, the vowel signs, and word maps that show what each letter of a word says.
 import { CSUR, toTengwar } from '../../../LoTR Elvish Translator/src/engine/tengwar.js'
 import { LETTER_STROKES, MARK_STROKES } from './recognize.js'
+import { smoothD } from './smooth.js'
 import { LETTERS } from '../course/tengwar.js'
 
 const T = (cp) => String.fromCharCode(cp)
@@ -53,7 +54,7 @@ const isStem = (s) => {
   const w = Math.max(...xs) - Math.min(...xs), h = Math.max(...ys) - Math.min(...ys)
   return h > 260 && w < 0.35 * h
 }
-const path = (s) => s.map(([x, y], i) => `${i ? 'L' : 'M'}${x} ${-y}`).join('')
+const path = (s) => smoothD(s)
 
 function describe(id) {
   const strokes = LETTER_STROKES[id] || []

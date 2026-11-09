@@ -2,6 +2,7 @@
 // Built to stay smooth on an older iPad: one canvas, only the newest bit of line is drawn while you write,
 // coalesced pointer points for a smooth line, and nothing is checked until the pen lifts.
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { smoothD, smoothInk } from './smooth.js'
 
 // font units: ascender 712, x-height 400, baseline 0, descender −312 (y up); the pad shows a little more
 const TOP = 820, BOTTOM = -420
@@ -49,12 +50,7 @@ export const WritingPad = forwardRef(function WritingPad({ width, guideText, gui
   const paintStroke = (s) => {
     const ctx = ctxRef.current
     if (!s.length) return
-    ctx.beginPath()
-    const [a, b] = toPx(s[0])
-    ctx.moveTo(a, b)
-    if (s.length === 1) ctx.lineTo(a + 0.1, b)
-    for (let i = 1; i < s.length; i++) { const [x, y] = toPx(s[i]); ctx.lineTo(x, y) }
-    ctx.stroke()
+    smoothInk(ctx, s.map(toPx))
   }
 
   useEffect(() => {
@@ -102,11 +98,12 @@ export const WritingPad = forwardRef(function WritingPad({ width, guideText, gui
     const cur = current.current
     if (!cur || cur.id !== e.pointerId) return
     current.current = null
+    paintAll() // repaint the finished stroke as a smooth curve
     redraw((n) => n + 1)
     onStroke?.(strokes.current.length)
   }
 
-  const guideD = (s) => s.map(([x, y], i) => `${i ? 'L' : 'M'}${x} ${-y}`).join(' ')
+  const guideD = smoothD
   return (
     <div className="pad" ref={box} style={{ aspectRatio: `${W} / ${H}`, width: `min(100%, calc(62vh * ${(W / H).toFixed(4)}))` }}>
       <svg className="pad__guides" viewBox={`${x0} ${-TOP} ${W} ${H}`} preserveAspectRatio="none" aria-hidden="true">
