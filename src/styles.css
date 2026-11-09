@@ -578,3 +578,46 @@ cite { font-style: italic; color: var(--silver-3); }
   .update { left: 16px; right: 16px; width: auto; bottom: calc(80px + env(safe-area-inset-bottom)); }
 }
 @media (prefers-reduced-motion: reduce) { .update { animation: none; } }
+
+/* ——— writing practice ——— */
+.write-card { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 20px; }
+.write-card .card__h { margin: 2px 0 4px; }
+.writing { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 1000px) { .writing { grid-template-columns: minmax(0, 1fr) 300px; align-items: start; } .writing > .nudge { grid-column: 1 / -1; } }
+.writing__main { display: grid; gap: 12px; }
+.writing__head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px; }
+.writing__head .card__h { margin: 2px 0 0; }
+.writing__sound { font: 500 15px var(--ui); color: var(--silver-3); margin-left: 6px; }
+.writing__result { min-height: 1.4em; margin: 0; color: var(--silver-2); }
+.writing__result.is-ok { color: var(--enamel-hi); }
+.writing__result.is-no { color: var(--rust); }
+.writing__pick { display: grid; gap: 14px; }
+.writing__group { margin: 0 0 6px; font: 600 12px var(--ui); letter-spacing: 0.08em; text-transform: uppercase; color: var(--silver-3); }
+.writing__letters { display: flex; flex-wrap: wrap; gap: 6px; }
+.writing__letter {
+  width: 52px; height: 52px; display: grid; place-items: center; border-radius: 10px;
+  border: 1px solid var(--line-soft); background: var(--panel); color: var(--silver);
+}
+.writing__letter .tengwar { font-size: 26px; line-height: 1; color: inherit; }
+.writing__letter.is-on { border-color: var(--enamel); box-shadow: 0 0 0 2px rgba(143, 207, 150, 0.35); }
+.writing__letter.is-traced { background: var(--ground-deep); }
+.writing__letter.is-done { border-color: rgba(220, 184, 98, 0.6); background: var(--gold-soft); }
+
+.pad {
+  position: relative; margin: 0 auto; border-radius: var(--leaf-r);
+  background: #f4efe2; color: #222a25; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none;
+}
+.pad__guides, .pad__ink { position: absolute; inset: 0; width: 100%; height: 100%; }
+.pad__ink { touch-action: none; cursor: crosshair; color: #222a25; }
+.pad__line { stroke: #c9bfa6; stroke-width: 3; }
+.pad__line--base { stroke: #9d917a; stroke-width: 5; }
+.pad__line--x { stroke-dasharray: 18 14; }
+.pad__glyph { font-family: var(--tengwar); font-size: 1000px; fill: #d9cfb8; }
+.pad__start circle { fill: #c0743f; }
+.pad__start text { font: 700 60px var(--ui); fill: #c0743f; }
+.pad__anim {
+  fill: none; stroke: #222a25; stroke-width: 34; stroke-linecap: round; stroke-linejoin: round;
+  stroke-dasharray: 1; stroke-dashoffset: 1; animation: pad-draw 0.75s var(--ease) forwards; animation-delay: calc(var(--i) * 0.85s + 0.2s);
+}
+@keyframes pad-draw { to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) { .pad__anim { animation-duration: 0.01s; animation-delay: 0s; } }

@@ -107,7 +107,7 @@ Tengwar keyboard; transcribe a line; and, in Writing mode, trace, write from mem
 
 1. **Engine** (done, 8 November): fixed 13 letters that were on the wrong code points, and added the English orthographic mode, numerals and Annatar conversion, all with tests. Export as PNG/SVG moved to step 2, since it draws in the browser.
 2. **The Tengwar keyboard and the reading and typing lessons** (done, 8 November): 19 lessons; physical keys follow Annatar; the Write in Tengwar desk saves PNG/SVG and copies Unicode or Annatar text.
-3. **Writing mode:** stroke data, tracing, the recogniser, stroke animation. Measured on the iPad 9.
+3. **Writing mode** (letters and vowel signs done, 9 November): strokes taken from Alcarin Tengwar's own outlines (scripts/tengwar-strokes.py) in Björkman's order; Watch, Trace and From memory; the $P recogniser plus checks of where the stem reaches and which telling parts are present. In tests every letter written roughly is accepted and no letter passes for another. Still to do: writing whole words, one tengwa per box.
 4. **The guide pages** (fonts, keyboards, transcribers), in the app and on the website.
 5. **Testing** on the preview page, on the iPad + Metapen A8, the iPhone and the PC, then release as 1.3.0.
 

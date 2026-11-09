@@ -9,7 +9,7 @@
   "main": "desktop/main.cjs",
   "scripts": {
     "dev": "vite",
-    "test": "node --test tests/course.test.js tests/app.test.js",
+    "test": "node --test tests/course.test.js tests/app.test.js tests/writing.test.js",
     "icons": "node scripts/icons.mjs",
     "build:artifact": "vite build --mode artifact && node scripts/to-artifact.mjs",
     "build:desktop": "vite build --mode desktop",
