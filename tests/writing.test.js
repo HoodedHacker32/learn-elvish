@@ -50,3 +50,32 @@ test('tracing: the letter itself passes, another letter does not, and a backward
   assert.deepEqual(r.reversed, [1])
   assert.equal(recognise(LETTER_STROKES.anto, names)[0].name, 'anto')
 })
+
+// ——— whole words ———
+import { clusters, clusterTarget, judgeCluster } from '../src/tengwar/words.js'
+import { COURSES } from '../src/course/index.js'
+import { toTengwar } from '../../LoTR Elvish Translator/src/engine/tengwar.js'
+
+test('the course words split into one box per tengwa, each written correctly passes', () => {
+  const words = [...COURSES.T.byKey.values()].filter((i) => i.kind === 'tword')
+  const boxed = words.filter((w) => clusters(w.tengwar))
+  assert.ok(boxed.length >= 60, `only ${boxed.length} words can be written`)
+  assert.equal(clusters(toTengwar('mellon', 'S')).length, 3) // malta, lambe with e and the bar, númen with o
+  for (const w of boxed) for (const c of clusters(w.tengwar)) {
+    const t = clusterTarget(c)
+    assert.ok(judgeCluster(hand(t.all, 40), c, 'memory', names).ok, `${w.el}: ${c.base} ${c.marks}`)
+    assert.ok(judgeCluster(t.all, c, 'trace', names).ok, `${w.el}: ${c.base} traced`)
+  }
+})
+
+test('a missing, extra or wrong vowel sign is caught', () => {
+  const marks = Object.keys(MARK_STROKES)
+  for (const a of marks) for (const b of marks) {
+    if (a === b) continue
+    const ink = [...LETTER_STROKES.tinco, ...clusterTarget({ base: 'tinco', marks: [b] }).marks[0].strokes]
+    assert.ok(!judgeCluster(ink, { base: 'tinco', marks: [a] }, 'memory', names).ok, `${b} accepted for ${a}`)
+  }
+  assert.match(judgeCluster(LETTER_STROKES.lambe, { base: 'lambe', marks: ['threeDots'] }, 'memory', names).text, /add its vowel sign/)
+  const extra = [...LETTER_STROKES.lambe, ...clusterTarget({ base: 'lambe', marks: ['dot'] }).marks[0].strokes]
+  assert.match(judgeCluster(extra, { base: 'lambe', marks: [] }, 'memory', names).text, /no vowel sign/)
+})

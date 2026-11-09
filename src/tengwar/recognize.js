@@ -202,3 +202,14 @@ export function checkTrace(ink, target, tol = 55) {
   const order = firsts.every((v, i) => i === 0 || v > firsts[i - 1])
   return { ok: coverage >= 0.82 && precision >= 0.78, coverage, precision, reversed: which.filter((x) => x.reversed).map((x) => x.stroke + 1), order }
 }
+
+// the nearest shape among a few named templates ({ name: strokes }), by the same point-cloud match
+export function nearestShape(strokes, templates) {
+  const c = cloud(strokes)
+  let best = null, bestD = Infinity
+  for (const [name, t] of Object.entries(templates)) {
+    const d = greedyMatch(c, cloud(t))
+    if (d < bestD) { bestD = d; best = name }
+  }
+  return best
+}

@@ -621,3 +621,23 @@ cite { font-style: italic; color: var(--silver-3); }
 }
 @keyframes pad-draw { to { stroke-dashoffset: 0; } }
 @media (prefers-reduced-motion: reduce) { .pad__anim { animation-duration: 0.01s; animation-delay: 0s; } }
+
+.writing-page { display: grid; gap: 18px; }
+.writing-page__tabs { justify-self: start; }
+.writing__words { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 1000px) { .writing__words { grid-template-columns: minmax(0, 1fr) 300px; align-items: start; } }
+.boxes { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.boxes__box {
+  min-width: 46px; height: 58px; display: grid; place-items: center; padding: 0 6px; border-radius: 8px;
+  border: 1px dashed var(--line); background: var(--ground-deep);
+}
+.boxes__box .tengwar { font-size: 28px; line-height: 1; color: var(--silver-3); }
+.boxes__box.is-now { border: 1px solid var(--enamel); box-shadow: 0 0 0 2px rgba(143, 207, 150, 0.3); }
+.boxes__box.is-done { border-style: solid; border-color: rgba(220, 184, 98, 0.55); background: var(--gold-soft); }
+.boxes__box.is-done .tengwar { color: var(--silver); }
+.writing__finished { display: grid; gap: 10px; justify-items: start; }
+.writing__wordlist { display: flex; flex-wrap: wrap; gap: 6px; }
+.writing__word { padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line-soft); background: var(--panel); color: var(--silver-2); font-size: 14px; }
+.writing__word.is-on { border-color: var(--enamel); color: var(--silver); }
+.writing__word.is-traced { background: var(--ground-deep); }
+.writing__word.is-done { border-color: rgba(220, 184, 98, 0.6); background: var(--gold-soft); color: var(--silver); }
