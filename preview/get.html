@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta name="robots" content="noindex, nofollow">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Get the app · Pedo Edhellen</title>
+<meta name="description" content="Start Pedo Edhellen in your browser, or download it for Windows.">
+<meta name="theme-color" content="#222a25">
+<link rel="icon" href="icon-192.png">
+<link rel="preload" href="fonts/marcellus-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/figtree-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+<header class="mast">
+  <div class="wrap">
+    <a class="mark" href="index.html"><svg viewBox="0 0 512 512" aria-hidden="true"><path fill="#dcb862" d="M120 400C120 228 228 112 400 112c0 176-110 288-280 288z"/><path d="M138 384 352 168" stroke="#222a25" stroke-width="26" stroke-linecap="round"/></svg>Pedo Edhellen</a>
+    <nav aria-label="Pages"><a href="course.html">The course</a><a href="names.html">The names</a><a href="tengwar.html">Tengwar</a><a href="translator.html">Lam Edhellen</a><a href="get.html" aria-current="page">Get the app</a></nav>
+    
+  </div>
+</header>
+<main>
+
+<div class="wrap">
+  <section class="leaf" aria-labelledby="title">
+    <div class="text">
+      <div class="figure-word">
+        <p class="specimen" lang="sjn"><span class="w">Annon<sup class="fn"><a href="#n1" id="r1" aria-label="Note 1">1</a></sup></span></p>
+        <p class="tw" aria-label="Annon in Tengwar"></p>
+        <p class="say">Say it: <b>AHN-non</b></p>
+      </div>
+      <h1 id="title">Get the app</h1>
+      <p class="lede">The same course, in your browser or on Windows. If you are not sure, start in the browser: there is nothing to install.</p>
+    </div>
+    <aside class="margin" aria-label="Notes">
+      <ol class="notes">
+        <li id="n1"><span class="elv" lang="sjn">annon</span>“gate”, as in <i>annon edhellen</i>, “Elvish gate”. <cite>The Fellowship of the Ring, Book II, ch. 4.</cite></li>
+      </ol>
+    </aside>
+  </section>
+
+  <section class="way" aria-labelledby="web">
+    <div>
+      <h2 id="web">In your browser</h2>
+      <p>Opens straight away on a computer, tablet or phone, and keeps working offline once it has loaded. To keep it like an app, choose “Install app” in your browser’s menu, or “Add to Home Screen” on a phone.</p>
+      <div class="row"><a class="press" href="app/">Open the web app <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
+    </div>
+    <aside class="margin" aria-label="Notes"><p class="caption">Your profile and progress are saved in that browser. The daily reminder can only arrive while the app is open or installed.</p></aside>
+  </section>
+
+  <section class="way" aria-labelledby="win">
+    <div>
+      <h2 id="win">For Windows</h2>
+      <p>The full app in its own window, with one gentle daily reminder as a Windows notification. Portable: there is no installer, you just run it.</p>
+      <div class="row"><a class="quiet" href="https://github.com/HoodedHacker32/learn-elvish/releases/latest/download/PedoEdhellen-portable.exe"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg> Download for Windows <small>72 MB</small></a></div>
+    </div>
+    <aside class="margin" aria-label="Notes"><p class="caption">The app is not signed yet, so Windows may show a SmartScreen warning the first time you open it. Choose “More info”, then “Run anyway”. Closing the window keeps it in the system tray so the reminder can arrive; quit it from the tray icon.</p></aside>
+  </section>
+
+  <section class="way" aria-labelledby="lam">
+    <div>
+      <h2 id="lam">Just want to translate something?</h2>
+      <p>Lam Edhellen, the companion translator, runs in your browser with nothing to install.</p>
+      <div class="row"><a class="quiet" href="https://hoodedhacker32.github.io/elvish-translator/">Open Lam Edhellen <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></a></div>
+    </div>
+  </section>
+</div>
+
+</main>
+<footer class="colophon">
+  <div class="wrap">
+    <div>
+      <p>Pedo Edhellen means “Speak Elvish!” in Tolkien’s Sindarin. Vocabulary from <a href="https://eldamo.org">Eldamo</a> by Paul Strack (CC BY 4.0). Tengwar set in Alcarin Tengwar by Toshi Omagari (SIL Open Font License).</p>
+      <p>The Elvish languages are J.R.R. Tolkien’s. Pedo Edhellen and Lam Edhellen are unofficial fan projects, not affiliated with the Tolkien Estate.</p>
+    </div>
+    <nav aria-label="Elsewhere">
+      <a href="app/">The web app</a>
+      <a href="get.html">Get the app</a>
+      <a href="https://hoodedhacker32.github.io/elvish-translator/">Lam Edhellen, the translator</a>
+      <a href="https://eldamo.org">Eldamo</a>
+      <a href="https://github.com/HoodedHacker32/learn-elvish">Source code</a>
+    </nav>
+  </div>
+</footer>
+<script>
+  // a footnote call and its note light up together, from either side
+  for (const a of document.querySelectorAll('sup.fn a')) {
+    const note = document.getElementById(a.hash.slice(1))
+    if (!note) continue
+    const on = (v) => { a.classList.toggle('is-lit', v); note.classList.toggle('is-lit', v) }
+    for (const t of [a, note]) {
+      t.addEventListener('mouseenter', () => on(true)); t.addEventListener('mouseleave', () => on(false))
+    }
+    a.addEventListener('focus', () => on(true)); a.addEventListener('blur', () => on(false))
+  }
+</script>
+</body>
+</html>
+
