@@ -109,7 +109,7 @@ Tengwar keyboard; transcribe a line; and, in Writing mode, trace, write from mem
 2. **The Tengwar keyboard and the reading and typing lessons** (done, 8 November): 19 lessons; physical keys follow Annatar; the Write in Tengwar desk saves PNG/SVG and copies Unicode or Annatar text.
 3. **Writing mode** (letters and vowel signs done, 9 November): strokes taken from Alcarin Tengwar's own outlines (scripts/tengwar-strokes.py) in Björkman's order; Watch, Trace and From memory; the $P recogniser plus checks of where the stem reaches and which telling parts are present. In tests every letter written roughly is accepted and no letter passes for another. Whole words (done, 9 November): one box per tengwa with its signs; the letter is traced or recognised, and each sign above or below is checked for place, shape and number of dots. 63 of the course's 67 words can be written (not yet the shorthands for the, of).
 4. **The guide pages** (done, 9 November): one source (src/course/tengwar-guide.js) for the app's "Tengwar on your devices" page and the website's tengwar.html: the two kinds of Tengwar text, Alcarin Tengwar and Tengwar Annatar, installing on each platform, typing (Keyman, Alcarin's Mac layout, the Annatar key chart), where it shows up (not Google Docs), and checking transcribers.
-5. **Testing** on the preview page, on the iPad + Metapen A8, the iPhone and the PC, then release as 1.3.0.
+5. **Testing and release** (done, 10 November): tested on the preview page on the iPad + Metapen A8 and the PC; after that testing, the lessons gained diagrams (Tolkien's table, letter plates with the stem and bow coloured, sign plates, word maps) and the strokes are drawn as smooth curves. Released as 1.4.0.
 
 ## Still to check while building
 
