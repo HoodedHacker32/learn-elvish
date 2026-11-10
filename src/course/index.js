@@ -3,10 +3,11 @@
 import { SINDARIN_COURSE } from './sindarin.js'
 import { QUENYA_COURSE } from './quenya.js'
 import { ROLEPLAY_COURSE } from './roleplay.js'
+import { TENGWAR_COURSE, LETTERS, MARKS, PUNCTUATION, NUMBERS } from './tengwar.js'
 import { TOLKIEN_PHRASES } from '../../../LoTR Elvish Translator/src/data/eldamo-phrases.js'
 import { LEXICON, CANON, translate } from '../../../LoTR Elvish Translator/src/engine/translate.js'
 import { respell, respellLine } from '../../../LoTR Elvish Translator/src/engine/pronounce.js'
-import { toTengwar } from '../../../LoTR Elvish Translator/src/engine/tengwar.js'
+import { toTengwar, toTengwarNumber, CSUR } from '../../../LoTR Elvish Translator/src/engine/tengwar.js'
 import { SOURCES } from '../../../LoTR Elvish Translator/src/data/sources.js'
 
 export const LANG_NAME = { S: 'Sindarin', Q: 'Quenya' }
@@ -18,6 +19,7 @@ export const ORIGIN = {
   built: { label: 'Built from Tolkien’s words', long: 'Every word is Tolkien’s, put together with grammar he showed' },
   early: { label: 'Early Tolkien', long: 'From Tolkien’s earlier drafts of the language, not his finished version' },
   fan: { label: 'Fan-made', long: 'Not Tolkien’s: made by people writing Elvish today to fill a gap' },
+  english: { label: 'English in Tengwar', long: 'English spelt in Tengwar letter by letter, as in Tolkien’s own English samples' },
 }
 
 const RANK = { A: 0, D: 1, E: 2, N: 3 }
@@ -87,7 +89,7 @@ function build(course, id, lang, { tengwar = true } = {}) {
       tengwar: true, items: words,
       teach: [
         { h: 'Tolkien’s Elvish letters', p: 'The Tengwar are the letters Tolkien designed for Elvish. Each consonant is a letter and each vowel a small mark written over one: in Quenya over the consonant before it, in Sindarin over the one after. Every word in this app is shown in Tengwar under the Latin spelling.', ex: [] },
-        { h: 'Read by shape', p: 'In this lesson you see only the Tengwar. Pick the word it spells. Look for the shapes of words you know.', ex: [] },
+        { h: 'Read by shape', p: 'In this lesson you see only the Tengwar. Pick the word it spells. Look for the shapes of words you know. To learn the letters one by one, and to type and write them, choose Tengwar at the top.', ex: [] },
       ],
     }
     units.push({ title: 'Tengwar', lessons: [lesson] })
@@ -96,12 +98,65 @@ function build(course, id, lang, { tengwar = true } = {}) {
   return { id, lang, units, lessons, byKey: new Map(lessons.flatMap((l) => l.items).map((i) => [i.key, i])) }
 }
 
-export const COURSES = {
+const LANGUAGE_COURSES = {
   S: build(SINDARIN_COURSE, 'S', 'S'),
   Q: build(QUENYA_COURSE, 'Q', 'Q'),
   R: build(ROLEPLAY_COURSE, 'R', 'S', { tengwar: false }),
 }
-export const COURSE_NAME = { S: 'Sindarin', Q: 'Quenya', R: 'Roleplay phrasebook' }
+
+// ——— the Tengwar course: letters, signs and words, read and typed ———
+const T = (...cps) => String.fromCharCode(...cps)
+const APPENDIX_E = 'The Lord of the Rings, Appendix E'
+// how a vowel sign or mark is shown on its own: vowels on the short carrier, other marks on tinco
+const markGlyph = (cp) => (['threeDots', 'acute', 'dot', 'rightCurl', 'leftCurl', 'twoDots'].includes(cp) ? T(CSUR.shortCarrier, CSUR[cp]) : T(CSUR.tinco, CSUR[cp]))
+
+function buildTengwar() {
+  const lessons = []
+  const units = TENGWAR_COURSE.map((u) => ({ title: u.unit, lessons: [] }))
+  const lettersSoFar = []
+  TENGWAR_COURSE.forEach((u, ui) => {
+    for (const l of u.lessons) {
+      const items = []
+      for (const id of l.letters || []) {
+        const L = LETTERS[id]
+        lettersSoFar.push(id)
+        items.push({ key: `T:l:${id}`, lang: 'T', kind: 'letter', id, el: L.name, en: L.sound, label: `${L.sound} · ${L.name}`, note: L.note, tengwar: T(CSUR[id]), say: '', origin: 'tolkien', source: APPENDIX_E })
+      }
+      for (const id of l.marks || []) {
+        const M = MARKS[id]
+        items.push({ key: `T:m:${id}`, lang: 'T', kind: 'mark', id, el: M.sound, en: M.name, label: `${M.sound} · ${M.name}`, tengwar: markGlyph(M.cp), say: '', origin: 'tolkien', source: APPENDIX_E })
+      }
+      if (l.punctuation) {
+        for (const [id, meaning] of PUNCTUATION) items.push({ key: `T:p:${id}`, lang: 'T', kind: 'mark', id, el: meaning, en: meaning, label: meaning, tengwar: T(CSUR[id]), say: '', origin: 'tolkien', source: 'Tolkien’s Tengwar samples' })
+      }
+      if (l.numbers) {
+        for (const n of NUMBERS) items.push({ key: `T:n:${n}`, lang: 'T', kind: 'number', el: String(n), en: `the number ${n}`, label: String(n), tengwar: toTengwarNumber(n), say: '', origin: 'tolkien', source: 'Tolkien’s Tengwar numerals' })
+      }
+      for (const [el, en, wl] of l.words || []) {
+        // a Sindarin or Quenya word is the one its course teaches, with that course's honest label
+        const from = wl === 'E' ? null : LANGUAGE_COURSES[wl].byKey.get(`${wl}:${el}`)
+        items.push({
+          key: `T:${wl}:${el}`, lang: wl, kind: 'tword', el, en: from?.en || en, label: el,
+          tengwar: toTengwar(el, wl), say: wl === 'E' ? '' : from?.say || respellLine(el, wl),
+          origin: wl === 'E' ? 'english' : from?.origin || 'unknown', source: from?.source || '',
+        })
+      }
+      const lesson = {
+        // a diagram that names no letters shows this lesson's (lit in the table, drawn in the anatomy plate)
+        ...l, teach: l.teach.map((t) => ({ ex: [], ...t, ...(t.diagram ? { diagram: { ...t.diagram, letters: t.diagram.letters || l.letters, highlight: t.diagram.highlight || l.letters } } : {}) })),
+        lang: 'T', course: 'T', unit: u.unit, unitIndex: ui, items,
+        letterPool: [...lettersSoFar],
+      }
+      lessons.push(lesson)
+      units[ui].lessons.push(lesson)
+    }
+  })
+  return { id: 'T', lang: 'T', units, lessons, byKey: new Map(lessons.flatMap((l) => l.items).map((i) => [i.key, i])) }
+}
+
+export const COURSES = { ...LANGUAGE_COURSES, T: buildTengwar() }
+export const COURSE_NAME = { S: 'Sindarin', Q: 'Quenya', R: 'Roleplay phrasebook', T: 'Tengwar' }
+export { LETTERS }
 
 // ——— the reading room: Tolkien's own short lines, word by word ———
 const plainWord = (w) => w.toLowerCase().normalize('NFC').replace(/^[’'‘]+|[’'‘!?.,;:“”"()]+$/g, '')

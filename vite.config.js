@@ -24,10 +24,26 @@ const desktopCsp = {
   transformIndexHtml: (html) => html.replace('<meta charset="UTF-8" />', `<meta charset="UTF-8" />\n    <meta http-equiv="Content-Security-Policy" content="${CSP}" />`),
 }
 
+// `import x from './file?base64'` gives the file as base64 text (the SVG export embeds the Tengwar font this
+// way, since the Windows app cannot fetch its own local files)
+const base64Import = {
+  name: 'base64-import',
+  enforce: 'pre',
+  async resolveId(id, importer) {
+    if (!id.endsWith('?base64')) return null
+    const r = await this.resolve(id.slice(0, -7), importer, { skipSelf: true })
+    return r && r.id + '?base64'
+  },
+  load(id) {
+    if (!id.endsWith('?base64')) return null
+    return `export default ${JSON.stringify(readFileSync(id.slice(0, -7)).toString('base64'))}`
+  },
+}
+
 export default defineConfig(({ mode }) => ({
   base: './',
   define: { __APP_VERSION__: JSON.stringify(PKG.version), __APP_BUILD__: JSON.stringify(BUILD) },
-  plugins: [react(), ...(mode === 'pwa' ? [versionFile] : []), ...(mode === 'artifact' ? [viteSingleFile()] : []), ...(mode === 'desktop' ? [desktopCsp] : [])],
+  plugins: [base64Import, react(), ...(mode === 'pwa' ? [versionFile] : []), ...(mode === 'artifact' ? [viteSingleFile()] : []), ...(mode === 'desktop' ? [desktopCsp] : [])],
   publicDir: mode === 'pwa' ? 'public' : false,
   server: { port: 5194, fs: { allow: ['..'] } },
   build: {

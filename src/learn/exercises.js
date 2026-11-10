@@ -117,3 +117,77 @@ export function buildReview(keys, course, seed = Date.now(), srs = {}) {
     return ask(it, 'type-el', course, r)
   }).filter((s) => s.item)
 }
+
+// ——— the Tengwar course ———
+// letters: see the letter → pick its sound; hear the sound → pick the letter; type it on the Tengwar keyboard.
+// words and marks: read the Tengwar → pick the Latin; see the Latin → pick the Tengwar; type it.
+const TYPE_MAX = 16 // longer lines are read and picked, not typed
+
+function twOptions(it, field, pool, r, n = 4) {
+  const picks = []
+  for (const i of shuffle(pool, r)) {
+    if (picks.length >= n - 1) break
+    if (i[field] !== it[field] && !picks.includes(i[field])) picks.push(i[field])
+  }
+  return shuffle([it[field], ...picks], r)
+}
+
+// wrong answers come only from what the learner has met: this lesson and the ones before it, or, in a review,
+// what they have learned (with the whole course as a fallback when that is too little)
+function twAsk(it, kind, known, r) {
+  const sameKind = (i) => i.kind === it.kind
+  let pool = known.filter(sameKind)
+  if (pool.length < 4) pool = [...new Map([...pool, ...known.allItems.filter(sameKind)].map((i) => [i.key, i])).values()]
+  switch (kind) {
+    case 'tw-sound': return { t: kind, item: it, answer: it.label, options: twOptions(it, 'label', pool, r) }
+    case 'tw-letter': return { t: kind, item: it, answer: it.tengwar, options: twOptions(it, 'tengwar', pool, r), tengwarOptions: true }
+    case 'tengwar': return { t: kind, item: it, answer: it.el, options: twOptions(it, 'el', pool, r) }
+    case 'tw-pick': return { t: kind, item: it, answer: it.tengwar, options: twOptions(it, 'tengwar', pool, r), tengwarOptions: true }
+    case 'tw-type': return { t: kind, item: it, answer: it.tengwar }
+    default: throw new Error(kind)
+  }
+}
+
+const typable = (it) => [...it.tengwar].length <= TYPE_MAX
+
+const withAll = (arr, course) => Object.assign(arr, { allItems: [...course.byKey.values()] })
+
+export function buildTengwarLesson(lesson, course, seed = Date.now(), { name } = {}) {
+  const r = rng(seed)
+  const upTo = course.lessons.indexOf(lesson)
+  const known = withAll(course.lessons.slice(0, upTo + 1).flatMap((l) => l.items), course)
+  const steps = lesson.teach.map((note) => ({ t: 'teach', note }))
+  const items = lesson.items
+  for (let i = 0; i < items.length; i += 2) {
+    const pair = items.slice(i, i + 2)
+    for (const it of pair) steps.push({ t: 'learn', item: it })
+    for (const it of pair) steps.push(twAsk(it, it.kind === 'letter' ? 'tw-sound' : 'tengwar', known, r))
+  }
+  const practice = []
+  items.forEach((it, k) => {
+    if (it.kind === 'letter') practice.push(twAsk(it, 'tw-letter', known, r), twAsk(it, k % 2 ? 'tw-sound' : 'tw-type', known, r))
+    else {
+      practice.push(twAsk(it, 'tw-pick', known, r))
+      if (typable(it) && k % 2 === 0) practice.push(twAsk(it, 'tw-type', known, r))
+      else practice.push(twAsk(it, 'tengwar', known, r))
+    }
+  })
+  const out = [...steps, ...shuffle(practice, r)]
+  // the name lesson ends with the learner's own name in Tengwar, ready to save
+  if (lesson.name && name) out.push({ t: 'scribe', text: name, lang: 'E' })
+  return out
+}
+
+export function buildTengwarReview(keys, course, seed = Date.now(), srs = {}) {
+  const r = rng(seed)
+  const known = withAll([...new Set([...keys, ...Object.keys(srs)])].map((k) => course.byKey.get(k)).filter(Boolean), course)
+  return shuffle(keys, r).map((key) => {
+    const it = course.byKey.get(key)
+    if (!it) return null
+    const box = srs[key]?.box ?? 1
+    if (it.kind === 'letter') return twAsk(it, box <= 1 ? 'tw-sound' : box === 2 ? 'tw-letter' : 'tw-type', known, r)
+    if (box <= 1) return twAsk(it, 'tengwar', known, r)
+    if (box === 2 || !typable(it)) return twAsk(it, 'tw-pick', known, r)
+    return twAsk(it, 'tw-type', known, r)
+  }).filter(Boolean)
+}
