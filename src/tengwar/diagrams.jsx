@@ -49,6 +49,8 @@ export function TableDiagram({ highlight = [] }) {
 
 // ——— the parts of a letter ———
 const CLOSED = new Set(['parma', 'quesse', 'umbar', 'ungwe', 'formen', 'hwesta', 'ampa', 'unque', 'malta', 'nwalme', 'vala', 'vilya'])
+// the second, fourth and fifth grades of the table double the bow
+const TWO_BOWS = new Set(['ando', 'umbar', 'anga', 'ungwe', 'anto', 'ampa', 'anca', 'unque', 'numen', 'malta', 'noldo', 'nwalme'])
 const isStem = (s) => {
   const xs = s.map((p) => p[0]), ys = s.map((p) => p[1])
   const w = Math.max(...xs) - Math.min(...xs), h = Math.max(...ys) - Math.min(...ys)
@@ -66,7 +68,7 @@ function describe(id) {
   const bows = strokes.filter((s) => s !== stem)
   const sx = stem.reduce((a, p) => a + p[0], 0) / stem.length
   const bx = bows.flat().reduce((a, p) => a + p[0], 0) / Math.max(1, bows.flat().length)
-  const side = bows.length ? (bx > sx ? 'bow right' : 'bow left') : ''
+  const side = bows.length ? (TWO_BOWS.has(id) ? 'two bows' : 'bow') + (bx > sx ? ' right' : ' left') : ''
   return [stemSay, side, CLOSED.has(id) ? 'closed' : bows.length ? 'open' : ''].filter(Boolean).join(', ')
 }
 
@@ -134,6 +136,18 @@ export function SignsDiagram({ signs }) {
   )
 }
 
+// ——— a punctuation mark or number on the guide lines, large and centred ———
+export function MarkPlate({ tengwar, label }) {
+  return (
+    <figure className="dgm-letter dgm-letter--l">
+      <svg viewBox="-260 -800 900 1200" role="img" aria-label={label}>
+        {[[712, 'asc'], [400, 'x'], [0, 'base'], [-312, 'desc']].map(([y, k]) => <line key={k} className={'dgm-line dgm-line--' + k} x1="-260" x2="640" y1={-y} y2={-y} />)}
+        <text className="dgm-glyph dgm-glyph--ink" x="190" y="0" textAnchor="middle" style={[...tengwar].length > 2 ? { fontSize: Math.round(2000 / [...tengwar].length) + 'px' } : undefined}>{tengwar}</text>
+      </svg>
+    </figure>
+  )
+}
+
 // ——— word maps ———
 const SOUND = {
   S: { tinco: 't', parma: 'p', calma: 'c', ando: 'd', umbar: 'b', anga: 'g', thule: 'th', formen: 'f', harma: 'ch', anto: 'dh', ampa: 'v', numen: 'n', malta: 'm', noldo: 'ng', ore: 'r', romen: 'r', lambe: 'l', alda: 'lh', arda: 'rh', silme: 's', silmeNuquerna: 's', esse: 'ss', esseNuquerna: 'ss', hyarmen: 'h', hwestaSindarinwa: 'hw', vilya: 'w', yanta: 'i', ure: 'u' },
@@ -166,8 +180,11 @@ export function wordMap(tengwar, lang) {
     if (c.space || c.punct || c.say) continue
     const carrier = c.base === 'shortCarrier' || c.base === 'longCarrier'
     let cons = carrier ? '' : (SOUND[lang]?.[c.base] ?? '?')
-    if (c.double && cons) cons += cons.length === 1 ? cons : ''
-    if (c.nasal) cons = (lang === 'E' ? 'n/m+' : 'n/m+') + cons
+    // Tolkien's shorthand: “of” with the bar below is “of the”
+    if (c.double && c.base === 'extUmbar') cons = 'of the'
+    else if (c.double && cons) cons += cons.length === 1 ? cons : ''
+    // the bar above is the nasal the next sound takes: m before p, b, f, v, m; n otherwise
+    if (c.nasal) cons = (/^[pbfvm]/.test(cons) ? 'm' : 'n') + cons
     const v = (c.vowel || '') + (c.base === 'longCarrier' ? ' (long)' : '')
     c.say = !v ? cons : !cons ? v : lang === 'Q' ? `${cons}+${v}` : `${v}+${cons}`
     if (c.silent) c.say += ' (+silent e)'

@@ -160,6 +160,12 @@ export function judgeWriting(strokes, want, candidates) {
     if (mineOwn >= 0.75 && rivalOwn < 0.5) return { ok: true }
     return { ok: false, looksLike: rival.name }
   }
+  // a twin a little further behind (calma behind quessë, noldo behind ñwalmë) still means the part that makes
+  // this letter itself, usually its closing bar, has to be there: leaving it off writes the other letter
+  if (top.name === want && rival && rival.score >= me.score - 0.15) {
+    const [mineOwn] = placedEvidence(strokes, want, rival.name)
+    if (mineOwn < 0.6) return { ok: false, looksLike: rival.name }
+  }
   return top.name === want ? { ok: true } : { ok: false, looksLike: top.name }
 }
 

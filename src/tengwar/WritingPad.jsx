@@ -105,7 +105,7 @@ export const WritingPad = forwardRef(function WritingPad({ width, guideText, gui
 
   const guideD = smoothD
   return (
-    <div className="pad" ref={box} style={{ aspectRatio: `${W} / ${H}`, width: `min(100%, calc(62vh * ${(W / H).toFixed(4)}))` }}>
+    <div className="pad" ref={box} style={{ aspectRatio: `${W} / ${H}`, width: `min(100%, calc(max(300px, 100dvh - 400px) * ${(W / H).toFixed(4)}))` }}>
       <svg className="pad__guides" viewBox={`${x0} ${-TOP} ${W} ${H}`} preserveAspectRatio="none" aria-hidden="true">
         {[[712, 'asc'], [400, 'x'], [0, 'base'], [-312, 'desc']].map(([y, k]) => <line key={k} className={'pad__line pad__line--' + k} x1={x0} x2={x1} y1={-y} y2={-y} />)}
         {showGuide && guideText && <text className="pad__glyph" x="0" y="0">{guideText}</text>}

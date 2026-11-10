@@ -149,7 +149,10 @@ function wordList(name) {
     .map((i) => ({ key: i.key, el: i.el, en: i.en, lang: i.lang, tengwar: i.tengwar, boxes: clusters(i.tengwar) }))
     .filter((w) => w.boxes && w.boxes.length <= 12)
   const mine = name && clusters(toTengwar(name, 'E'))
-  return mine ? [{ key: 'name', el: name, en: 'your name', lang: 'E', tengwar: toTengwar(name, 'E'), boxes: mine }, ...words] : words
+  // in the order the list shows them (English, Sindarin, Quenya), so the first word chosen is the first one listed
+  const ORDER = { E: 0, S: 1, Q: 2 }
+  const listed = words.sort((a, b) => ORDER[a.lang] - ORDER[b.lang])
+  return mine ? [{ key: 'name', el: name, en: 'your name', lang: 'E', tengwar: toTengwar(name, 'E'), boxes: mine }, ...listed] : listed
 }
 
 function WordPractice({ state, update }) {

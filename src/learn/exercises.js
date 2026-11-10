@@ -148,7 +148,8 @@ function twAsk(it, kind, known, r) {
   }
 }
 
-const typable = (it) => [...it.tengwar].length <= TYPE_MAX
+// numbers are read, not typed: the keyboard has no numeral keys
+const typable = (it) => it.kind !== 'number' && [...it.tengwar].length <= TYPE_MAX
 
 const withAll = (arr, course) => Object.assign(arr, { allItems: [...course.byKey.values()] })
 

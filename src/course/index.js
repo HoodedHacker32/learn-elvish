@@ -127,10 +127,10 @@ function buildTengwar() {
         items.push({ key: `T:m:${id}`, lang: 'T', kind: 'mark', id, el: M.sound, en: M.name, label: `${M.sound} · ${M.name}`, tengwar: markGlyph(M.cp), say: '', origin: 'tolkien', source: APPENDIX_E })
       }
       if (l.punctuation) {
-        for (const [id, meaning] of PUNCTUATION) items.push({ key: `T:p:${id}`, lang: 'T', kind: 'mark', id, el: meaning, en: meaning, label: meaning, tengwar: T(CSUR[id]), say: '', origin: 'tolkien', source: 'Tolkien’s Tengwar samples' })
+        for (const [id, meaning] of PUNCTUATION) items.push({ key: `T:p:${id}`, lang: 'T', kind: 'mark', id, el: meaning, en: meaning, label: meaning, tengwar: T(CSUR[id]), say: '', origin: 'tolkien', source: 'Tengwar samples in his manuscripts' })
       }
       if (l.numbers) {
-        for (const n of NUMBERS) items.push({ key: `T:n:${n}`, lang: 'T', kind: 'number', el: String(n), en: `the number ${n}`, label: String(n), tengwar: toTengwarNumber(n), say: '', origin: 'tolkien', source: 'Tolkien’s Tengwar numerals' })
+        for (const n of NUMBERS) items.push({ key: `T:n:${n}`, lang: 'T', kind: 'number', el: String(n), en: `the number ${n}`, label: String(n), tengwar: toTengwarNumber(n), say: '', origin: 'tolkien', source: 'Tengwar samples in his manuscripts' })
       }
       for (const [el, en, wl] of l.words || []) {
         // a Sindarin or Quenya word is the one its course teaches, with that course's honest label
@@ -167,7 +167,9 @@ export const READING = ['S', 'Q'].flatMap((lang) => {
   const canon = CANON.filter((c) => c.lang === lang).map((c) => ({ lang, el: c.elvish, en: c.meaning, where: c.where, who: c.who, famous: true }))
   const more = TOLKIEN_PHRASES.filter((p) => p.lang === lang && !p.uncertain && p.elvish.split(/\s+/).length >= 2 && p.elvish.split(/\s+/).length <= 7)
     .map((p) => ({ lang, el: p.elvish.charAt(0).toUpperCase() + p.elvish.slice(1), en: p.english, where: p.where, famous: false }))
-  return [...canon, ...more].filter((x) => !seen.has(x.el.toLowerCase()) && seen.add(x.el.toLowerCase())).map((x) => ({ ...x, words: lineWords(x.el) }))
+  // the same line with and without its punctuation is one line
+  const same = (el) => lineWords(el.replace(/[’‘]/g, "'")).map((x) => x.key).join(' ')
+  return [...canon, ...more].filter((x) => !seen.has(same(x.el)) && seen.add(same(x.el))).map((x) => ({ ...x, words: lineWords(x.el) }))
 })
 
 // the word forms someone knows in a language, from what they have learned

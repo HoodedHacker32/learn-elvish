@@ -721,3 +721,15 @@ cite { font-style: italic; color: var(--silver-3); }
 .wordmap__cell small { font: 600 13px var(--ui); color: #2f6f45; white-space: nowrap; }
 .wordmap__cell.is-punct { background: none; }
 .wordmap__gap { width: 14px; }
+
+/* a phone: the table's five columns shrink to fit the card instead of hiding the fourth */
+@media (max-width: 480px) {
+  .dgm-table { padding: 8px 6px; }
+  .dgm-table__row { grid-template-columns: minmax(58px, 1fr) repeat(4, minmax(42px, 1fr)); gap: 2px; }
+  .dgm-table__head span, .dgm-table__rule { font-size: 10px; padding: 2px; }
+  .dgm-table__head b, .dgm-table__rule b { font-size: 11.5px; }
+  .dgm-table__cell { min-height: 50px; padding: 3px 1px; }
+  .dgm-table__cell .tengwar { font-size: 25px; }
+  .dgm-table__cell small { font-size: 9.5px; }
+}
+.dgm-glyph--ink { fill: #222a25; }

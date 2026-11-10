@@ -5,7 +5,7 @@ import { checkTyped, checkTengwar, sameWords } from './learn/check.js'
 import { TengwarTyper, TengwarDesk, TakeAway } from './tengwar-ui.jsx'
 import { Writing } from './tengwar/Writing.jsx'
 import { Guide } from './tengwar/Guide.jsx'
-import { Diagram, LetterPlate, WordMap } from './tengwar/diagrams.jsx'
+import { Diagram, LetterPlate, MarkPlate, WordMap } from './tengwar/diagrams.jsx'
 import { toTengwar } from '../../LoTR Elvish Translator/src/engine/tengwar.js'
 import { dueKeys, grade, introduce, strength, today } from './learn/srs.js'
 import { earn, fresh, useProgress } from './learn/store.js'
@@ -551,7 +551,7 @@ function LearnTengwar({ item }) {
       <span className="label">{what}</span>
       {item.kind === 'letter' ? <LetterPlate id={item.id} size="l" label="describe" />
         : item.kind === 'tword' ? <WordMap tengwar={item.tengwar} lang={item.lang} latin={item.el} />
-          : <p className="tengwar tengwar--hero" aria-label="In Tengwar">{item.tengwar}</p>}
+          : <MarkPlate tengwar={item.tengwar} label={`${item.el} in Tengwar`} />}
       {item.kind === 'letter' ? (
         <>
           <p className="learn__el"><span className="elv elv--big">{item.el}</span></p>
@@ -800,7 +800,7 @@ function Session({ title, lang, initial, onFinish, onQuit }) {
             <div className="verdict">
               <strong>{answered.result === 'right' ? answered.praise : answered.result === 'accents' ? (step.t === 'tw-type' ? 'Right. When a vowel sits on silmë or essë, it is turned over.' : 'Right. Mind the accents.') : 'Not quite.'}</strong>
               {answered.result !== 'right' && step.t !== 'rule' && step.item?.key.startsWith('T:') && (
-                <span> <span className="tengwar tengwar--inline">{step.item.tengwar}</span> · {step.item.kind === 'letter' ? `${step.item.el}, ${step.item.en}` : step.item.el}</span>
+                <span> <span className="tengwar tengwar--inline">{step.item.tengwar}</span> · {step.item.kind === 'letter' ? (step.item.en.startsWith('(') ? `${step.item.el} ${step.item.en}` : `${step.item.el}, ${step.item.en}`) : step.item.el}</span>
               )}
               {answered.result !== 'right' && step.t !== 'rule' && step.item && !step.item.key.startsWith('T:') && (
                 <span> <Elv lang={step.item.lang}>{step.item.el}</Elv> · “{step.item.en}”{step.t === 'stress' ? ` · ${step.item.say}` : ''}</span>
@@ -813,7 +813,7 @@ function Session({ title, lang, initial, onFinish, onQuit }) {
         ) : plain ? (
           <button className="btn btn--primary" onClick={next} autoFocus>{step.t === 'teach' ? 'Got it' : step.t === 'scribe' ? 'Finish' : 'Next'}</button>
         ) : (
-          <span className="hint">{asks} exercises · {step.t === 'tw-type' ? 'type with the Annatar keys' : '1–4 to choose'} · Enter to continue</span>
+          <span className="hint">{asks} {asks === 1 ? 'exercise' : 'exercises'} · {step.t === 'tw-type' ? 'type with the Annatar keys' : '1–4 to choose'} · Enter to continue</span>
         )}
       </div>
     </div>
@@ -849,22 +849,24 @@ function Done({ summary, onHome, onNext }) {
 
 function Reading({ lang, state, onRead }) {
   const [open, setOpen] = useState(null)
-  const known = useMemo(() => knownForms(state.srs, lang), [state.srs, lang])
-  const lines = useMemo(() => READING.filter((l) => l.lang === lang).map((l) => {
-    const k = l.words.filter((w) => known.has(w.key)).length
+  // the Tengwar course reads both languages; each line is judged by what is known in its own language
+  const langs = lang === 'T' ? ['S', 'Q'] : [lang]
+  const knownIn = useMemo(() => Object.fromEntries(langs.map((lg) => [lg, knownForms(state.srs, lg)])), [state.srs, lang]) // eslint-disable-line react-hooks/exhaustive-deps
+  const lines = useMemo(() => READING.filter((l) => langs.includes(l.lang)).map((l) => {
+    const k = l.words.filter((w) => knownIn[l.lang].has(w.key)).length
     return { ...l, known: k, pct: Math.round((k / l.words.length) * 100) }
-  }).sort((a, b) => (b.famous - a.famous) || (b.pct - a.pct)), [lang, known])
+  }).sort((a, b) => (b.famous - a.famous) || (b.pct - a.pct)), [lang, knownIn]) // eslint-disable-line react-hooks/exhaustive-deps
   const full = lines.filter((l) => l.pct === 100).length
   const shown = lines.slice(0, 60)
   return (
     <div className="reading">
-      <p className="reading__sum">You can fully read <strong><CountUp value={full} /></strong> of Tolkien’s {lines.length} {LANG_NAME[lang]} lines here, and part of {lines.filter((l) => l.pct > 0 && l.pct < 100).length} more. Tap a line for Tolkien’s own English.</p>
+      <p className="reading__sum">You can fully read <strong><CountUp value={full} /></strong> of Tolkien’s {lines.length} {lang === 'T' ? 'Sindarin and Quenya' : LANG_NAME[lang]} lines here, and part of {lines.filter((l) => l.pct > 0 && l.pct < 100).length} more. Tap a line for Tolkien’s own English.</p>
       <ul className="lines">
         {shown.map((l) => (
           <li key={l.el}>
             <button className={'line' + (open === l.el ? ' is-open' : '')} onClick={() => { if (open !== l.el) onRead(); setOpen(open === l.el ? null : l.el) }}>
-              <span className="line__el" lang={lang === 'Q' ? 'qya' : 'sjn'}>
-                {l.words.map((w, k) => <span key={k} className={known.has(w.key) ? 'is-known' : ''}>{w.w} </span>)}
+              <span className="line__el" lang={l.lang === 'Q' ? 'qya' : 'sjn'}>
+                {l.words.map((w, k) => <span key={k} className={knownIn[l.lang].has(w.key) ? 'is-known' : ''}>{w.w} </span>)}
               </span>
               <span className="line__pct" aria-label={`${l.pct}% known`}><span style={{ width: `${l.pct}%` }} /></span>
               {open === l.el && <span className="line__en">“{l.en}”{l.who ? ` · ${l.who}` : ''} · <cite>{l.where}</cite></span>}
@@ -1157,7 +1159,7 @@ function Learner({ user }) {
           {view.name === 'done' && <Done summary={view.summary} onHome={() => go({ name: 'home' })} onNext={view.next ? () => openLesson(view.next) : null} />}
           {view.name === 'writing' && <Writing state={state} update={update} />}
           {view.name === 'guide' && <Guide />}
-          {view.name === 'reading' && <Reading lang={course.lang === 'T' ? 'S' : course.lang} state={state} onRead={readLine} />}
+          {view.name === 'reading' && <Reading lang={course.lang} state={state} onRead={readLine} />}
           {view.name === 'notebook' && <Notebook course={course} state={state} />}
           {view.name === 'settings' && (
             <Settings state={state} update={update} user={user} sync={sync} online={online} onAccount={openAccount}

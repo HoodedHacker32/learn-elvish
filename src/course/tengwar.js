@@ -186,7 +186,7 @@ export const TENGWAR_COURSE = [
       {
         id: 't-punct', title: 'Punctuation', punctuation: true,
         words: [['Daro!', 'stop!', 'S'], ['Noro lim, noro lim, Asfaloth!', 'run swift, run swift, Asfaloth!', 'S']],
-        teach: [{ h: 'Dots for pauses', p: 'Tolkien marked pauses with dots: one dot (pusta) for a short pause, two for a full stop. His exclamation and question marks have their own shapes.' }],
+        teach: [{ h: 'Dots for pauses', p: 'Tolkien marked pauses with dots: one dot (pusta) for a short pause, two for a full stop. His exclamation and question marks have their own shapes.', diagram: { type: 'words', words: [['Daro!', 'S'], ['Noro lim, noro lim, Asfaloth!', 'S']] } }],
       },
       {
         id: 't-numbers', title: 'Numbers', numbers: true,

@@ -25,7 +25,13 @@ const KEY_LABEL = {
   doubler: 'double', pusta: 'pause', doublePusta: 'stop', exclamation: '!', question: '?', extAndo: 'the', extUmbar: 'of',
 }
 const labelOf = (id) => KEY_LABEL[id] || (LETTERS[id] ? LETTERS[id].sound.split(/[ ·(]/)[0] || LETTERS[id].name : id)
-const nameOf = (id) => LETTERS[id]?.name || { extAndo: '“the” (extended ando)', extUmbar: '“of” (extended umbar)' }[id] || id
+const MARK_NAME = {
+  threeDots: 'three dots (a)', acute: 'acute (e)', dot: 'dot (i)', rightCurl: 'right curl (o)', leftCurl: 'left curl (u)',
+  twoDots: 'two dots (y)', dotBelow: 'dot below (silent e)', nasalizer: 'bar above (n or m before)', doubler: 'bar below (doubled)',
+  pusta: 'pusta (pause)', doublePusta: 'double pusta (stop)', exclamation: 'exclamation mark', question: 'question mark',
+  extAndo: '“the” (extended ando)', extUmbar: '“of” (extended umbar)',
+}
+const nameOf = (id) => LETTERS[id]?.name || MARK_NAME[id] || id
 // a vowel sign is shown on a carrier, any other mark on tinco, so it can be seen on its own
 const faceOf = (id) => (VOWEL_SIGNS.includes(id) ? T(CSUR.shortCarrier) + T(CSUR[id]) : ['dotBelow', 'nasalizer', 'doubler'].includes(id) ? T(CSUR.tinco) + T(CSUR[id]) : T(CSUR[id]))
 
@@ -37,8 +43,14 @@ const PHYSICAL = (() => {
     if (CSUR[name] == null || Array.isArray(keys)) continue
     for (const k of keys) if (!m.has(k)) m.set(k, name)
   }
+  // Annatar puts these on Á and À, which few keyboards can type; ! and ? do what they say
+  // (in Annatar ! is extended tinco, which is not on the keyboard)
+  m.set('!', 'exclamation'); m.set('?', 'question')
   return m
 })()
+
+// Space types a space, unless a button or link outside the Tengwar keyboard has focus: then it presses that
+const spaceIsTheirs = (t) => !!t.closest?.('button, a, select, [role="radio"], [role="button"]') && !t.closest('.twkb')
 
 export function TengwarKeyboard({ onKey, lit }) {
   return (
@@ -77,7 +89,7 @@ export function TengwarTyper({ onAnswer, answered, initial = '' }) {
       if (answered || e.ctrlKey || e.metaKey || e.altKey || /^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return
       if (e.key === 'Backspace') { e.preventDefault(); press('back'); return }
       if (e.key === 'Enter') { if (v.trim()) { e.preventDefault(); onAnswer(v) } return }
-      if (e.key === ' ') { e.preventDefault(); press(' '); return }
+      if (e.key === ' ') { if (spaceIsTheirs(e.target)) return; e.preventDefault(); press(' '); return }
       const name = PHYSICAL.get(e.key)
       if (!name) return
       e.preventDefault()
@@ -239,7 +251,7 @@ function DeskTyper({ value, onChange }) {
     const key = (e) => {
       if (e.ctrlKey || e.metaKey || e.altKey || /^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return
       if (e.key === 'Backspace') { e.preventDefault(); press('back'); return }
-      if (e.key === ' ') { e.preventDefault(); press(' '); return }
+      if (e.key === ' ') { if (spaceIsTheirs(e.target)) return; e.preventDefault(); press(' '); return }
       const name = PHYSICAL.get(e.key)
       if (!name) return
       e.preventDefault(); press(T(CSUR[name])); setLit(name); setTimeout(() => setLit(null), 220)

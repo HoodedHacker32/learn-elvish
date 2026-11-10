@@ -71,7 +71,7 @@ const webReminder = {
   },
   async tick() {
     const s = this.settings
-    if (!s?.enabled || !s.body || Notification.permission !== 'granted') return
+    if (!s?.enabled || !s.body || !('Notification' in w) || Notification.permission !== 'granted') return
     const now = new Date()
     const [h, m] = s.time.split(':').map(Number)
     const due = now.getHours() > h || (now.getHours() === h && now.getMinutes() >= m)
