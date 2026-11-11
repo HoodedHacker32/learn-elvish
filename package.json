@@ -4,7 +4,7 @@
   "description": "Learn Tolkien's Sindarin and Quenya",
   "author": "HoodedHacker",
   "private": true,
-  "version": "1.5.0",
+  "version": "1.5.1",
   "type": "module",
   "main": "desktop/main.cjs",
   "scripts": {

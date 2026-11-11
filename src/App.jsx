@@ -352,6 +352,8 @@ function DeleteAccount({ user }) {
 // a round picture, or the first letter of the name when there is none
 function Avatar({ user, name, size = 34 }) {
   const [broken, setBroken] = useState(false)
+  // a new picture gets a fresh chance to load, even if the last one failed
+  useEffect(() => { setBroken(false) }, [user?.avatar])
   const letter = (name || user?.name || user?.email || 'E')[0].toUpperCase()
   return user?.avatar && !broken
     ? <img className="avatar" src={user.avatar} alt="" width={size} height={size} onError={() => setBroken(true)} />
