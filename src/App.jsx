@@ -188,7 +188,7 @@ function TitleBar({ state, update, go, profile, user, onAccount }) {
       </div>
       <div className="titlebar__end">
         <div className="me">
-          <button className="me__btn" onClick={() => setMenu(!menu)} aria-expanded={menu} aria-label={user ? `Account: ${user.email}` : 'Your progress'} title={user?.email || profile.name || 'Your progress'}><Avatar user={user} name={profile.name} size={34} /></button>
+          <button className="me__btn" onClick={() => setMenu(!menu)} aria-expanded={menu} aria-label={user ? `Account: ${user.email}` : 'Your progress'} title={user?.email || profile.name || 'Your progress'}><Avatar user={user} name={profile.name} size={30} /></button>
           {menu && (
             <div className="me__menu" role="menu" onMouseLeave={() => setMenu(false)}>
               {(profile.name || user) && <p className="me__name">{profile.name || user.email}</p>}

@@ -765,7 +765,9 @@ cite { font-style: italic; color: var(--silver-3); }
 
 /* ——— profile ——— */
 .avatar { display: inline-grid; place-items: center; border-radius: 50%; object-fit: cover; background: var(--panel-hi); color: var(--gold); font-weight: 600; flex: none; }
-.me__btn:has(.avatar) { padding: 0; overflow: hidden; }
+/* the picture or initial fills the round button exactly, centred (30 px inside its 1 px border) */
+.me__btn { display: grid; place-items: center; padding: 0; overflow: hidden; }
+.me__btn .avatar { display: block; }
 .profile { display: grid; gap: 16px; max-width: 560px; }
 .profile__pic { display: grid; justify-items: start; gap: 10px; margin-bottom: 12px; }
 .linkish { background: none; border: 0; padding: 0; color: var(--silver-2); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; justify-self: start; font: inherit; font-size: 13px; }
