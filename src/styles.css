@@ -791,3 +791,15 @@ cite { font-style: italic; color: var(--silver-3); }
 }
 .twkb--phone .twkb__key { -webkit-tap-highlight-color: transparent; }
 .twkb--phone .twkb__key:focus:not(:focus-visible) { outline: none; background: var(--panel); }
+
+/* ——— the picture cropper ——— */
+.cropper { display: grid; justify-items: center; gap: 12px; padding: 16px; border: 1px solid var(--line-soft); border-radius: 14px; background: var(--ground-deep); width: 100%; max-width: 320px; }
+.cropper__frame { position: relative; overflow: hidden; border-radius: 12px; background: #111; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+.cropper__frame:active { cursor: grabbing; }
+.cropper__frame:focus-visible { outline: 2px solid var(--enamel); outline-offset: 3px; }
+.cropper__frame img { position: absolute; max-width: none; pointer-events: none; }
+/* everything outside the circle is dimmed, so you see exactly what will show */
+.cropper__ring { position: absolute; inset: 0; border-radius: 50%; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.55); border: 2px solid rgba(255, 255, 255, 0.85); pointer-events: none; }
+.cropper__zoom { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; width: 100%; color: var(--silver-2); font-size: 18px; }
+.cropper__zoom input { width: 100%; accent-color: var(--enamel); }
+.cropper .hint { margin: 0; text-align: center; }

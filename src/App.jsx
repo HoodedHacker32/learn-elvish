@@ -12,7 +12,8 @@ import { earn, fresh, useProgress } from './learn/store.js'
 import { streakInfo, FREEZES_PER_WEEK } from './learn/streak.js'
 import { todaysChallenges, countSession, progressOf } from './learn/challenges.js'
 import { QUIZ, recommend } from './learn/quiz.js'
-import { account, accountsAvailable, shrinkAvatar } from './accounts/index.js'
+import { account, accountsAvailable, shrinkAvatar, LIMITS } from './accounts/index.js'
+import { AvatarCropper } from './accounts/AvatarCropper.jsx'
 import { checkForUpdate, applyUpdate, DOWNLOAD_PAGE } from './platform/update.js'
 import { PLATFORM, reminders, translatorLink, TRANSLATOR_URL } from './platform/index.js'
 import { sound } from './platform/sound.js'
@@ -371,13 +372,19 @@ function Profile({ user, state, update, sync }) {
     update((s) => ({ ...s, name: n }))
     try { await account.setName(n) } catch (x) { setErr(x.message) }
   }
-  const pick = async (e) => {
+  // choosing a picture opens the cropper; only the square chosen there is shrunk and saved
+  const [picking, setPicking] = useState(null)
+  const pick = (e) => {
     const f = e.target.files?.[0]
     e.target.value = ''
     if (!f) return
     if (!/^image\//.test(f.type)) { setErr('Choose a picture (JPEG, PNG or WebP).'); return }
-    setErr(''); setBusy('picture')
-    try { await account.setAvatar(user.id, await shrinkAvatar(f)) } catch (x) { setErr(x.message || 'That picture could not be read.') } finally { setBusy('') }
+    if (f.size > LIMITS.pictureIn) { setErr('That picture is too large. Choose one under 25 MB.'); return }
+    setErr(''); setPicking(f)
+  }
+  const save = async (crop) => {
+    setBusy('picture')
+    try { await account.setAvatar(user.id, await shrinkAvatar(picking, crop)); setPicking(null) } catch (x) { setErr(x.message || 'That picture could not be read.') } finally { setBusy('') }
   }
   return (
     <div className="profile">
@@ -389,6 +396,7 @@ function Profile({ user, state, update, sync }) {
             {user.avatar && <button className="btn btn--quiet" disabled={!!busy} onClick={async () => { setBusy('picture'); try { await account.removeAvatar(user.id) } catch (x) { setErr(x.message) } finally { setBusy('') } }}>Remove</button>}
           </div>
           <input ref={file} type="file" accept="image/*" hidden onChange={pick} />
+          {picking && <AvatarCropper file={picking} busy={busy === 'picture'} onSave={save} onCancel={() => setPicking(null)} />}
           <p className="hint">Cropped to a small square on your device before it is saved.</p>
         </div>
         <label className="field">Your name<input id="profile-name" value={name} maxLength={40} autoComplete="nickname" onChange={(e) => setName(e.target.value)} onBlur={saveName} /></label>

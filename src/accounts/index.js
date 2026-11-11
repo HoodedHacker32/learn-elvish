@@ -158,17 +158,19 @@ export const account = {
   },
 }
 
-// A picture, cropped to the middle square and shrunk to 96 × 96 on the device, as WebP (JPEG where WebP cannot
+// A picture, cropped to the square chosen in the cropper and shrunk to 96 × 96 on the device, as WebP (JPEG where WebP cannot
 // be made). That is a few kilobytes, so storage stays tiny however many people sign up.
-export async function shrinkAvatar(file, size = 96) {
+// `crop` is the square chosen in the cropper, in the picture's own pixels; without one, the middle square
+export async function shrinkAvatar(file, crop, size = 96) {
   if (file.size > LIMITS.pictureIn) throw new AccountError('That picture is too large. Choose one under 25 MB.')
   const img = await createImageBitmap(file)
-  const side = Math.min(img.width, img.height)
+  const short = Math.min(img.width, img.height)
+  const { x, y, side } = crop || { x: (img.width - short) / 2, y: (img.height - short) / 2, side: short }
   const c = document.createElement('canvas')
   c.width = c.height = size
   const g = c.getContext('2d')
   g.imageSmoothingQuality = 'high'
-  g.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, size, size)
+  g.drawImage(img, x, y, side, side, 0, 0, size, size)
   img.close?.()
   const as = (type, q) => new Promise((ok) => c.toBlob(ok, type, q))
   // step the quality down until it fits (it nearly always fits first time)
