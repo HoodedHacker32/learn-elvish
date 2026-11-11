@@ -18,7 +18,7 @@
     "desktop:probe": "npm run build:desktop && electron . --probe",
     "probe": "node tools/probe.mjs",
     "pwa": "npm run build:pwa && vite preview --outDir dist-pwa --port 5195",
-    "dist:win": "npm run build:desktop && electron-builder --win portable",
+    "dist:win": "npm run build:desktop && electron-builder --win",
     "build:site": "vite build --mode pwa && node site/build.mjs",
     "site": "npm run build:site && node tools/serve-site.mjs"
   },
@@ -36,11 +36,22 @@
       "buildResources": "build"
     },
     "win": {
-      "target": "portable",
+      "target": ["portable", "nsis"],
       "icon": "build/icon.png"
     },
     "portable": {
       "artifactName": "PedoEdhellen-${version}-portable.exe"
+    },
+    "nsis": {
+      "artifactName": "PedoEdhellen-${version}-setup.exe",
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Pedo Edhellen",
+      "deleteAppDataOnUninstall": false,
+      "runAfterFinish": true,
+      "include": "build/installer.nsh"
     }
   },
   "dependencies": {

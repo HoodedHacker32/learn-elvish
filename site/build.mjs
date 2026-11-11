@@ -3,7 +3,8 @@
 //   {{end}}                          the colophon, the notes script and the closing tags
 //   {{tw:Text|S}} {{say:Text|S}}     Tengwar and pronunciation from the translator's own engine
 //   {{icon:name}} {{mark:origin}}    drawn icons and the provenance leaf
-//   {{size}}                         the size of the newest Windows build
+//   {{size}}                         the size of the newest Windows build (portable)
+//   {{setup}}, {{setupSize}}         the Windows installer on the latest release, and its size
 //   {{guide}}                        the Tengwar guide, from src/course/tengwar-guide.js (the app shows the same)
 //   {{download}}                     the Windows build on the repository's latest GitHub release
 import { readFileSync, writeFileSync, mkdirSync, copyFileSync, readdirSync, statSync, existsSync, cpSync, rmSync } from 'node:fs'
@@ -16,16 +17,20 @@ const here = (p) => new URL(p, import.meta.url)
 const out = here('../dist-site/')
 for (const d of ['', 'fonts/', 'shots/']) mkdirSync(new URL(d, out), { recursive: true })
 
-// the newest Windows build in release/ or a side folder like release-1.2.0/ (used when release/ is locked)
-const exe = readdirSync(here('../')).filter((d) => /^release(-[\d.]+)?$/.test(d)).flatMap((d) => {
+// the newest Windows builds (portable and installer) in release/ or side folders like release-1.2.0/
+const builds = readdirSync(here('../')).filter((d) => /^release(-[\d.]+)?(-setup)?$/.test(d)).flatMap((d) => {
   const dir = here(`../${d}/`)
   return readdirSync(dir).filter((f) => f.endsWith('.exe')).map((f) => ({ f, url: new URL(f, dir), t: statSync(new URL(f, dir)).mtimeMs }))
-}).sort((a, b) => b.t - a.t)[0]
-const size = exe ? `${Math.round(statSync(exe.url).size / 1048576)} MB` : ''
+}).sort((a, b) => b.t - a.t)
+const mb = (b) => (b ? `${Math.round(statSync(b.url).size / 1048576)} MB` : '')
+const exe = builds.find((b) => /-portable\.exe$/.test(b.f))
+const setup = builds.find((b) => /-setup\.exe$/.test(b.f))
+const size = mb(exe), setupSize = mb(setup)
 
 // published at hoodedhacker32.github.io/learn-elvish; the .exe is too big for Pages, so it lives on the release
 const REPO = 'https://github.com/HoodedHacker32/learn-elvish'
 const DOWNLOAD = `${REPO}/releases/latest/download/PedoEdhellen-portable.exe`
+const SETUP = `${REPO}/releases/latest/download/PedoEdhellen-setup.exe`
 
 const ICONS = {
   arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
@@ -131,6 +136,8 @@ for (const f of pages) {
     .replace(/\{\{icon:(\w+)\}\}/g, (_, n) => icon(n))
     .replace(/\{\{mark:(\w+)\}\}/g, (_, o) => mark(o))
     .replaceAll('{{size}}', size)
+    .replaceAll('{{setupSize}}', setupSize)
+    .replaceAll('{{setup}}', SETUP)
     .replaceAll('{{download}}', DOWNLOAD)
     .replace('{{guide}}', guideHtml)
   if (/\{\{/.test(html)) throw new Error(`${f}: unreplaced token ${html.match(/\{\{[^}]*\}\}/)[0]}`)
