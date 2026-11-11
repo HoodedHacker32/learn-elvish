@@ -222,10 +222,6 @@ cite { font-style: italic; color: var(--silver-3); }
 .welcome__elv .elv--big { font-size: clamp(48px, 12vw, 72px); color: var(--gold); }
 @keyframes glowin { from { letter-spacing: 0.12em; } }
 .welcome__lit { margin: 0 0 8px; text-align: center; color: var(--silver-2); }
-.profiles { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.profile { width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px 14px; text-align: left; font-weight: 600; border-radius: var(--leaf-r); border: 1px solid var(--line); background: var(--ground-deep); transition: border-color 0.2s, transform 0.2s var(--ease); }
-.profile:hover { border-color: var(--enamel); transform: translateX(3px); }
-.profile__init { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--gold-soft); color: var(--gold); font-family: var(--display); }
 .unlock { display: flex; gap: 8px; }
 .field { display: grid; gap: 6px; font-weight: 500; }
 .field--inline { display: flex; align-items: center; gap: 10px; }
