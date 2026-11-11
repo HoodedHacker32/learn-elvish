@@ -1,3 +1,9 @@
+// the interface fonts, bundled with the app (nothing is fetched from Google or anyone else)
+import '@fontsource/figtree/latin-400.css'
+import '@fontsource/figtree/latin-500.css'
+import '@fontsource/figtree/latin-600.css'
+import '@fontsource/figtree/latin-700.css'
+import '@fontsource/marcellus/latin-400.css'
 import { createRoot } from 'react-dom/client'
 import tengwarFont from '../../LoTR Elvish Translator/src/assets/fonts/AlcarinTengwar-Regular.woff2'
 import App from './App.jsx'
@@ -22,3 +28,12 @@ if (import.meta.env.MODE === 'pwa' && PLATFORM === 'web' && 'serviceWorker' in n
 }
 
 createRoot(document.getElementById('root')).render(<App />)
+
+// Battery: looping animations (the breathing next lesson, today's leaf, the caret) stop whenever the app is out
+// of sight or, on the desktop, not the window in use.
+{
+  const root = document.documentElement
+  const set = (idle) => root.classList.toggle('is-idle', idle)
+  document.addEventListener('visibilitychange', () => set(document.hidden))
+  window.pedo?.window?.onIdle?.((idle) => set(idle))
+}

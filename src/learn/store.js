@@ -8,16 +8,21 @@ import { storage } from '../platform/index.js'
 
 export const fresh = () => ({
   v: 2, track: 'S', xp: 0, days: {}, practiceDays: [], lessons: {}, srs: {}, daily: null,
-  quiz: null, name: '', settings: { goal: 60, reminder: { enabled: true, time: '19:00' } }, updatedAt: 0,
+  quiz: null, name: '', settings: { goal: 300, reminder: { enabled: true, time: '19:00' } }, updatedAt: 0,
 })
+
+// Daily goals were first set at 30, 60 and 120 points, but a single lesson earns 150 to 200: the goal was met in
+// a minute. They now match the minutes they promise (about 30 points a minute); old settings move across.
+const OLD_GOALS = { 30: 150, 60: 300, 120: 600 }
+const withGoal = (settings) => (OLD_GOALS[settings?.goal] ? { ...settings, goal: OLD_GOALS[settings.goal] } : settings)
 
 // older saves (v1) had a streak object instead of a list of practice days
 export function upgrade(s) {
   if (!s) return null
-  if (s.v === 2) return { ...fresh(), ...s, settings: { ...fresh().settings, ...s.settings } }
+  if (s.v === 2) return { ...fresh(), ...s, settings: withGoal({ ...fresh().settings, ...s.settings }) }
   if (s.v === 1) {
     const practiceDays = Object.keys(s.days || {}).map(Number)
-    return { ...fresh(), ...s, v: 2, practiceDays, quiz: null }
+    return { ...fresh(), ...s, v: 2, practiceDays, quiz: null, settings: withGoal({ ...fresh().settings, ...s.settings }) }
   }
   return null
 }
@@ -56,7 +61,7 @@ export function mergeProgress(a, b) {
     daily = { ...newer.daily, counts }
   } else if (older.daily && newer.daily) daily = older.daily.day > newer.daily.day ? older.daily : newer.daily
   return {
-    ...newer, days, lessons, srs, daily,
+    ...newer, days, lessons, srs, daily, settings: withGoal(newer.settings),
     xp: Math.max(older.xp || 0, newer.xp || 0),
     practiceDays: [...new Set([...(older.practiceDays || []), ...(newer.practiceDays || [])])].sort((x, y) => x - y),
     name: newer.name || older.name || '',

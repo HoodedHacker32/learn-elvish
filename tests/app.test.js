@@ -72,7 +72,7 @@ test('progress from two devices merges without losing anything', async () => {
     lessons: { a: { done: true, score: 80, at: 3 } }, srs: { 'S:aran': { box: 3, due: 9, r: 3, w: 0 } }, days: { 3: 40 } }
   const pc = { ...base, updatedAt: 200, xp: 30, name: 'Tester', practiceDays: [2, 3],
     lessons: { a: { done: true, score: 95, at: 2 }, b: { done: true, score: 70, at: 2 } },
-    srs: { 'S:aran': { box: 1, due: 4, r: 0, w: 1 }, 'S:roch': { box: 1, due: 5, r: 0, w: 0 } }, days: { 2: 30, 3: 10 }, settings: { ...base.settings, goal: 120 } }
+    srs: { 'S:aran': { box: 1, due: 4, r: 0, w: 1 }, 'S:roch': { box: 1, due: 5, r: 0, w: 0 } }, days: { 2: 30, 3: 10 }, settings: { ...base.settings, goal: 600 } }
   const m = mergeProgress(phone, pc)
   assert.deepEqual(m.practiceDays, [1, 2, 3])
   assert.equal(m.lessons.a.score, 95)
@@ -82,7 +82,15 @@ test('progress from two devices merges without losing anything', async () => {
   assert.equal(m.days[3], 40)
   assert.equal(m.xp, 40)
   assert.equal(m.name, 'Tester')
-  assert.equal(m.settings.goal, 120) // settings from the copy changed last
+  assert.equal(m.settings.goal, 600) // settings from the copy changed last
   assert.equal(m.updatedAt, 200)
   assert.deepEqual(mergeProgress(phone, null), phone)
+})
+
+test('old daily goals move to the new scale, which matches the minutes they promise', async () => {
+  const { upgrade, fresh } = await import('../src/learn/store.js')
+  for (const [was, now] of [[30, 150], [60, 300], [120, 600]]) {
+    assert.equal(upgrade({ ...fresh(), settings: { ...fresh().settings, goal: was } }).settings.goal, now)
+  }
+  assert.equal(upgrade({ ...fresh(), settings: { ...fresh().settings, goal: 300 } }).settings.goal, 300) // already new: unchanged
 })

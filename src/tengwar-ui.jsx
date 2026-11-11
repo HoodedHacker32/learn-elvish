@@ -1,7 +1,7 @@
 // The Tengwar keyboard, typed Tengwar answers, and the desk for writing anything in Tengwar and taking it
 // elsewhere: as a picture (PNG or SVG), as Unicode text (ConScript), or as text for Tengwar Annatar.
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { CSUR, ANNATAR_LETTERS, ANNATAR_TEHTAR, toTengwar, toAnnatar } from '../../LoTR Elvish Translator/src/engine/tengwar.js'
+import { CSUR, ANNATAR_LETTERS, ANNATAR_TEHTAR, toTengwar, toAnnatar, fromAnnatar } from '../../LoTR Elvish Translator/src/engine/tengwar.js'
 import { LETTERS } from './course/tengwar.js'
 
 const T = (cp) => String.fromCharCode(cp)
@@ -49,10 +49,96 @@ const PHYSICAL = (() => {
   return m
 })()
 
+// each key's place on a real keyboard, shown on a computer so that typing on screen teaches the Annatar layout
+const KEY_OF = (() => {
+  const k = {}
+  for (const [key, name] of PHYSICAL) {
+    if (!/^[!-~]$/.test(key)) continue // Annatar's accented keys (Ô, È…) cannot be typed on most keyboards
+    if (!(name in k) || (/[a-z0-9]/i.test(key) && !/[a-z0-9]/i.test(k[name]))) k[name] = key
+  }
+  return k
+})()
+// a capital is typed with Shift, so say so
+const keyFace = (key) => (/^[A-Z]$/.test(key) ? '⇧' + key : key)
+const SHOW_KEYS = typeof matchMedia === 'function' && matchMedia('(hover: hover) and (pointer: fine)').matches
+
 // Space types a space, unless a button or link outside the Tengwar keyboard has focus: then it presses that
 const spaceIsTheirs = (t) => !!t.closest?.('button, a, select, [role="radio"], [role="button"]') && !t.closest('.twkb')
 
+// ——— a phone: a keyboard laid out like a phone's own ———
+// Two layers, as on a phone: the letters, and the signs with the rarer letters and punctuation. Keys are tall,
+// a pressed key shows its letter large above your finger, delete repeats while held, and Android gives a tick.
+const PHONE_LAYERS = {
+  letters: [ROWS[0], ROWS[1], ROWS[2], ROWS[3]],
+  signs: [
+    ['threeDots', 'acute', 'dot', 'rightCurl', 'leftCurl', 'twoDots'],
+    ['dotBelow', 'nasalizer', 'doubler', 'shortCarrier', 'longCarrier', 'hyarmen'],
+    ['hwestaSindarinwa', 'yanta', 'ure', 'extAndo', 'extUmbar', 'pusta'],
+    ['doublePusta', 'exclamation', 'question'],
+  ],
+}
+const PHONE_QUERY = '(pointer: coarse) and (max-width: 700px)'
+function usePhone() {
+  const [phone, setPhone] = useState(() => typeof matchMedia === 'function' && matchMedia(PHONE_QUERY).matches)
+  useEffect(() => {
+    if (typeof matchMedia !== 'function') return
+    const m = matchMedia(PHONE_QUERY), on = () => setPhone(m.matches)
+    m.addEventListener?.('change', on)
+    return () => m.removeEventListener?.('change', on)
+  }, [])
+  return phone
+}
+const tick = () => { try { navigator.vibrate?.(8) } catch { /* not on iOS */ } }
+
+function PhoneKeyboard({ onKey }) {
+  const [layer, setLayer] = useState('letters')
+  const [down, setDown] = useState(null)
+  const repeat = useRef(null)
+  const stopRepeat = () => { clearTimeout(repeat.current); clearInterval(repeat.current); repeat.current = null }
+  useEffect(() => stopRepeat, [])
+  const press = (id) => ({
+    onPointerDown: () => { setDown(id); tick() },
+    onPointerUp: () => setDown(null), onPointerCancel: () => setDown(null), onPointerLeave: () => setDown(null),
+  })
+  const back = {
+    onPointerDown: (e) => {
+      e.preventDefault(); tick(); onKey('back')
+      repeat.current = setTimeout(() => { repeat.current = setInterval(() => onKey('back'), 75) }, 420)
+    },
+    onPointerUp: stopRepeat, onPointerCancel: stopRepeat, onPointerLeave: stopRepeat,
+    // a pointer has already deleted on the way down; a keyboard press (detail 0) deletes here
+    onClick: (e) => { if (e.detail === 0) onKey('back') },
+  }
+  const rows = PHONE_LAYERS[layer]
+  return (
+    <div className="twkb twkb--phone" role="group" aria-label="Tengwar keyboard">
+      {rows.map((row, ri) => (
+        <div className="twkb__row" key={layer + ri} style={{ gridTemplateColumns: `repeat(${layer === 'letters' ? 8 : 6}, minmax(0, 1fr))` }}>
+          {row.map((id) => (
+            <button key={id} type="button" className={'twkb__key' + (layer === 'signs' ? ' twkb__key--mark' : '') + (down === id ? ' is-down' : '')}
+              {...press(id)} onClick={() => onKey(T(CSUR[id]))} aria-label={nameOf(id)}>
+              <span className="twkb__glyph">{faceOf(id)}</span>
+              <span className="twkb__lab">{labelOf(id)}</span>
+              {down === id && <span className="twkb__pop" aria-hidden="true"><span className="twkb__glyph">{faceOf(id)}</span><span className="twkb__lab">{labelOf(id)}</span></span>}
+            </button>
+          ))}
+        </div>
+      ))}
+      <div className="twkb__row twkb__row--bottom">
+        <button type="button" className="twkb__key twkb__key--fn" onClick={() => { tick(); setLayer(layer === 'letters' ? 'signs' : 'letters') }}
+          aria-label={layer === 'letters' ? 'Show vowel signs, other letters and punctuation' : 'Show the letters'}>
+          {layer === 'letters' ? 'signs' : 'letters'}
+        </button>
+        <button type="button" className="twkb__key twkb__key--space" {...press('space')} onClick={() => onKey(' ')} aria-label="Space">space</button>
+        <button type="button" className="twkb__key twkb__key--fn twkb__key--back" {...back} aria-label="Delete">⌫</button>
+      </div>
+    </div>
+  )
+}
+
 export function TengwarKeyboard({ onKey, lit }) {
+  const phone = usePhone()
+  if (phone) return <PhoneKeyboard onKey={onKey} />
   return (
     <div className="twkb" role="group" aria-label="Tengwar keyboard">
       {ROWS.map((row, ri) => (
@@ -63,6 +149,7 @@ export function TengwarKeyboard({ onKey, lit }) {
             return (
               <button key={id} type="button" className={'twkb__key' + (lit === id ? ' is-lit' : '') + (ri >= 5 ? ' twkb__key--mark' : '')}
                 onClick={() => onKey(T(CSUR[id]))} title={nameOf(id)} aria-label={nameOf(id)}>
+                {SHOW_KEYS && KEY_OF[id] && <kbd className="twkb__kbd" aria-hidden="true">{keyFace(KEY_OF[id])}</kbd>}
                 <span className="twkb__glyph">{faceOf(id)}</span>
                 <span className="twkb__lab">{labelOf(id)}</span>
               </button>
@@ -217,13 +304,15 @@ export function TengwarDesk({ startText = '' }) {
   const [text, setText] = useState(startText)
   const [direct, setDirect] = useState(false)
   const [typed, setTyped] = useState('')
-  const tengwar = useMemo(() => (direct ? typed : toTengwar(text, mode)), [direct, typed, text, mode])
+  // A and U convert text typed for one kind of Tengwar font into the other (see FONT_KINDS)
+  const tengwar = useMemo(() => (direct ? typed : mode === 'A' ? fromAnnatar(text) : mode === 'U' ? [...text].filter((c) => c.codePointAt(0) >= 0xe000 || /\s/.test(c)).join('') : toTengwar(text, mode)), [direct, typed, text, mode])
+  const converting = !direct && (mode === 'A' || mode === 'U')
   return (
     <section className="desk card" aria-label="Write in Tengwar">
       <div className="desk__head">
         <h2 className="card__h">Write in Tengwar</h2>
         <div className="track track--small" role="radiogroup" aria-label="Spell it as">
-          {[['E', 'English'], ['S', 'Sindarin'], ['Q', 'Quenya'], ['K', 'Keyboard']].map(([k, label]) => (
+          {[['E', 'English'], ['S', 'Sindarin'], ['Q', 'Quenya'], ['K', 'Keyboard'], ['A', 'From Annatar'], ['U', 'From Unicode']].map(([k, label]) => (
             <button key={k} type="button" role="radio" aria-checked={k === 'K' ? direct : !direct && mode === k} className={(k === 'K' ? direct : !direct && mode === k) ? 'is-on' : ''}
               onClick={() => { if (k === 'K') setDirect(true); else { setDirect(false); setMode(k) } }}>{label}</button>
           ))}
@@ -231,13 +320,19 @@ export function TengwarDesk({ startText = '' }) {
       </div>
       {direct ? (
         <DeskTyper value={typed} onChange={setTyped} />
+      ) : converting ? (
+        <textarea className="desk__input desk__input--convert" value={text} onChange={(e) => setText(e.target.value)} rows={3}
+          placeholder={mode === 'A' ? 'Paste text typed for Tengwar Annatar, e.g. iT5^t$ t#7UyE5' : 'Paste Unicode Tengwar (from Alcarin, Telcontar or this app)'}
+          aria-label={mode === 'A' ? 'Text typed for Tengwar Annatar' : 'Unicode Tengwar text'} autoComplete="off" spellCheck="false" />
       ) : (
         <input className="desk__input" value={text} onChange={(e) => setText(e.target.value)} placeholder={mode === 'E' ? 'Your name, a word, a line…' : mode === 'S' ? 'Mae govannen' : 'Elen síla lúmenn’ omentielvo'}
           aria-label="Text to write in Tengwar" autoComplete="off" spellCheck="false" />
       )}
       <p className="desk__out tengwar" aria-label="In Tengwar">{tengwar || ' '}</p>
       <TakeAway tengwar={tengwar} latin={direct ? 'tengwar' : text} />
-      <p className="hint">English is spelt letter by letter, as in Tolkien’s own English samples. Sindarin and Quenya are spelt as in the courses.</p>
+      <p className="hint">{converting
+        ? 'Tengwar fonts come in two kinds. Annatar, Parmaitë, Elfica and the older Tengwar fonts use ordinary keys (Dan Smith’s encoding); Alcarin, Telcontar, FreeMono Tengwar and this app use Unicode. Paste text for one kind, then copy it for the other: Copy text gives Unicode, Copy for Annatar gives the keys.'
+        : 'English is spelt letter by letter, as in Tolkien’s own English samples. Sindarin and Quenya are spelt as in the courses.'}</p>
     </section>
   )
 }

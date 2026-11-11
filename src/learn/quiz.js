@@ -41,7 +41,7 @@ export const QUIZ = [
   },
 ]
 
-export const GOALS = { 5: 30, 10: 60, 20: 120 } // points a day
+export const GOALS = { 5: 150, 10: 300, 20: 600 } // points a day: about 30 a minute, 10 for each right answer
 
 export function recommend(a) {
   const uses = a.use || []
@@ -67,5 +67,5 @@ export function recommend(a) {
   if (uses.includes('write')) why.push('Every word is shown in Tengwar, and the Tengwar lesson at the end of each course teaches you to read them.')
   if (uses.includes('read')) why.push('The reading room shows Tolkien’s own lines and lights up the words you already know.')
   const minutes = a.time || '10'
-  return { track, focus, goal: GOALS[minutes] || 60, minutes, why }
+  return { track, focus, goal: GOALS[minutes] || 300, minutes, why }
 }

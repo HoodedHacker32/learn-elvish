@@ -12,9 +12,11 @@ import { earn, fresh, useProgress } from './learn/store.js'
 import { streakInfo, FREEZES_PER_WEEK } from './learn/streak.js'
 import { todaysChallenges, countSession, progressOf } from './learn/challenges.js'
 import { QUIZ, recommend } from './learn/quiz.js'
-import { account, accountsAvailable } from './accounts/index.js'
+import { account, accountsAvailable, shrinkAvatar } from './accounts/index.js'
 import { checkForUpdate, applyUpdate, DOWNLOAD_PAGE } from './platform/update.js'
 import { PLATFORM, reminders, translatorLink, TRANSLATOR_URL } from './platform/index.js'
+import { sound } from './platform/sound.js'
+import { APP_VERSION } from './platform/update.js'
 
 const XP = { right: 10, accents: 8 }
 const ASKS = new Set(['pick-en', 'pick-el', 'type-el', 'tiles', 'stress', 'rule', 'tengwar', 'match', 'tw-sound', 'tw-letter', 'tw-pick', 'tw-type'])
@@ -119,6 +121,7 @@ function Ring({ value, max, size = 92 }) {
   const k = Math.min(1, value / max)
   return (
     <svg className={'ring' + (k >= 1 ? ' is-full' : '')} width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
+      <circle cx={size / 2} cy={size / 2} r={r} className="ring__glow" />
       <circle cx={size / 2} cy={size / 2} r={r} className="ring__track" />
       <circle cx={size / 2} cy={size / 2} r={r} className="ring__fill" strokeDasharray={c} strokeDashoffset={c * (1 - k)} />
     </svg>
@@ -184,10 +187,11 @@ function TitleBar({ state, update, go, profile, user, onAccount }) {
       </div>
       <div className="titlebar__end">
         <div className="me">
-          <button className="me__btn" onClick={() => setMenu(!menu)} aria-expanded={menu} aria-label={user ? `Account: ${user.email}` : 'Your progress'} title={user?.email || profile.name || 'Your progress'}>{(profile.name || user?.email || 'E')[0].toUpperCase()}</button>
+          <button className="me__btn" onClick={() => setMenu(!menu)} aria-expanded={menu} aria-label={user ? `Account: ${user.email}` : 'Your progress'} title={user?.email || profile.name || 'Your progress'}><Avatar user={user} name={profile.name} size={34} /></button>
           {menu && (
             <div className="me__menu" role="menu" onMouseLeave={() => setMenu(false)}>
               {(profile.name || user) && <p className="me__name">{profile.name || user.email}</p>}
+              {user && <button role="menuitem" onClick={() => { setMenu(false); go({ name: 'profile' }) }}>Profile</button>}
               <button role="menuitem" onClick={() => { setMenu(false); go({ name: 'settings' }) }}>Settings</button>
               {accountsAvailable && (user
                 ? <button role="menuitem" onClick={() => { setMenu(false); account.signOut() }}>Sign out</button>
@@ -265,8 +269,18 @@ function AccountForm({ start = 'signup', name, onDone, onCancel }) {
       if (mode === 'signup') {
         const r = await account.signUp({ email, password: pw, name })
         if (r.confirm) setSent(true); else onDone()
-      } else { await account.signIn({ email, password: pw }); onDone() }
+      } else if (mode === 'forgot') { await account.resetPassword(email); setSent('reset') }
+      else { await account.signIn({ email, password: pw }); onDone() }
     } catch (x) { setErr(x.message) } finally { setBusy(false) }
+  }
+  if (sent === 'reset') {
+    return (
+      <div className="card account">
+        <span className="label">Check your email</span>
+        <p>If there is an account for <strong>{email}</strong>, a link to choose a new password is on its way. Open it on any device: it opens the web app and asks for the new password.</p>
+        <div className="row"><button className="btn btn--primary" onClick={() => { setSent(false); setMode('signin') }}>Back to sign in</button>{onCancel && <button className="btn btn--quiet" onClick={onCancel}>Later</button>}</div>
+      </div>
+    )
   }
   if (sent) {
     return (
@@ -279,17 +293,119 @@ function AccountForm({ start = 'signup', name, onDone, onCancel }) {
   }
   return (
     <form className="card account" onSubmit={submit}>
-      <span className="label">{mode === 'signup' ? 'Save your progress across devices' : 'Sign in'}</span>
-      <p className="hint">{mode === 'signup' ? 'Your progress so far comes with you. You can keep learning without an account; this only adds a copy online.' : 'Progress on this device and in your account are joined, so nothing is lost.'}</p>
+      <span className="label">{mode === 'signup' ? 'Save your progress across devices' : mode === 'forgot' ? 'Forgotten your password?' : 'Sign in'}</span>
+      <p className="hint">{mode === 'signup' ? 'Your progress so far comes with you. You can keep learning without an account; this only adds a copy online.' : mode === 'forgot' ? 'We will email you a link to choose a new one. Your progress is safe either way.' : 'Progress on this device and in your account are joined, so nothing is lost.'}</p>
       <label className="field">Email<input id="account-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required /></label>
-      <label className="field">Password<input id="account-password" type="password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} minLength={8} required /></label>
+      {mode !== 'forgot' && <label className="field">Password<input id="account-password" type="password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} minLength={8} required /></label>}
+      {mode === 'signin' && <button type="button" className="linkish" onClick={() => { setMode('forgot'); setErr('') }}>Forgotten your password?</button>}
+      {mode === 'signup' && <p className="hint">By signing up you agree to how your data is kept: <a href="https://hoodedhacker32.github.io/learn-elvish/privacy.html" target="_blank" rel="noopener">privacy</a>.</p>}
       {err && <p className="error">{err}</p>}
       <div className="row">
-        <button className="btn btn--primary" type="submit" disabled={busy}>{busy ? 'One moment…' : mode === 'signup' ? 'Sign up' : 'Sign in'}</button>
-        <button type="button" className="btn btn--quiet" onClick={() => { setMode(mode === 'signup' ? 'signin' : 'signup'); setErr('') }}>{mode === 'signup' ? 'I have an account' : 'Make an account'}</button>
+        <button className="btn btn--primary" type="submit" disabled={busy}>{busy ? 'One moment…' : mode === 'signup' ? 'Sign up' : mode === 'forgot' ? 'Send the link' : 'Sign in'}</button>
+        <button type="button" className="btn btn--quiet" onClick={() => { setMode(mode === 'signup' ? 'signin' : mode === 'forgot' ? 'signin' : 'signup'); setErr('') }}>{mode === 'signup' ? 'I have an account' : mode === 'forgot' ? 'Back to sign in' : 'Make an account'}</button>
         {onCancel && <button type="button" className="btn btn--quiet" onClick={onCancel}>Not now</button>}
       </div>
     </form>
+  )
+}
+
+// ——— the profile: name, picture, password, and leaving ———
+
+// after a reset link, or from the profile: choose a new password
+function NewPassword({ title = 'Choose a new password', onDone, onCancel }) {
+  const [pw, setPw] = useState('')
+  const [err, setErr] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [done, setDone] = useState(false)
+  if (done) return <div className="card account"><span className="label">{title}</span><p>Your password is changed.</p><div className="row"><button className="btn btn--primary" onClick={onDone}>Done</button></div></div>
+  return (
+    <form className="card account" onSubmit={async (e) => { e.preventDefault(); setErr(''); setBusy(true); try { await account.setPassword(pw); setDone(true) } catch (x) { setErr(x.message) } finally { setBusy(false) } }}>
+      <span className="label">{title}</span>
+      <label className="field">New password<input id="new-password" type="password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="new-password" minLength={8} required /></label>
+      {err && <p className="error">{err}</p>}
+      <div className="row">
+        <button className="btn btn--primary" type="submit" disabled={busy}>{busy ? 'One moment…' : 'Save the new password'}</button>
+        {onCancel && <button type="button" className="btn btn--quiet" onClick={onCancel}>Cancel</button>}
+      </div>
+    </form>
+  )
+}
+
+// deleting an account takes two clear steps, and says exactly what goes and what stays
+function DeleteAccount({ user }) {
+  const [step, setStep] = useState(0)
+  const [err, setErr] = useState('')
+  const [busy, setBusy] = useState(false)
+  if (step === 0) return <button className="btn btn--quiet btn--danger" onClick={() => setStep(1)}>Delete my account</button>
+  return (
+    <div className="danger" role="alert">
+      <p><strong>Delete your account?</strong> Your account, your picture and the copy of your progress kept online are deleted for good. Your progress on this device stays, and you can keep learning without an account.</p>
+      {err && <p className="error">{err}</p>}
+      <div className="row">
+        <button className="btn btn--danger" disabled={busy} onClick={async () => { setErr(''); setBusy(true); try { await account.deleteAccount(user.id) } catch (x) { setErr(x.message); setBusy(false) } }}>{busy ? 'Deleting…' : 'Delete it for good'}</button>
+        <button className="btn btn--quiet" onClick={() => setStep(0)}>Keep my account</button>
+      </div>
+    </div>
+  )
+}
+
+// a round picture, or the first letter of the name when there is none
+function Avatar({ user, name, size = 34 }) {
+  const [broken, setBroken] = useState(false)
+  const letter = (name || user?.name || user?.email || 'E')[0].toUpperCase()
+  return user?.avatar && !broken
+    ? <img className="avatar" src={user.avatar} alt="" width={size} height={size} onError={() => setBroken(true)} />
+    : <span className="avatar avatar--letter" style={{ width: size, height: size, fontSize: size * 0.45 }} aria-hidden="true">{letter}</span>
+}
+
+function Profile({ user, state, update, sync }) {
+  const [busy, setBusy] = useState('')
+  const [err, setErr] = useState('')
+  const [pwOpen, setPwOpen] = useState(false)
+  const [name, setName] = useState(state.name || user.name || '')
+  const file = useRef(null)
+  const saveName = async () => {
+    const n = name.trim().slice(0, 40)
+    update((s) => ({ ...s, name: n }))
+    try { await account.setName(n) } catch (x) { setErr(x.message) }
+  }
+  const pick = async (e) => {
+    const f = e.target.files?.[0]
+    e.target.value = ''
+    if (!f) return
+    if (!/^image\//.test(f.type)) { setErr('Choose a picture (JPEG, PNG or WebP).'); return }
+    setErr(''); setBusy('picture')
+    try { await account.setAvatar(user.id, await shrinkAvatar(f)) } catch (x) { setErr(x.message || 'That picture could not be read.') } finally { setBusy('') }
+  }
+  return (
+    <div className="profile">
+      <section className="card profile__card">
+        <div className="profile__pic">
+          <Avatar user={user} name={name} size={96} />
+          <div className="row">
+            <button className="btn" disabled={!!busy} onClick={() => file.current?.click()}>{busy === 'picture' ? 'Saving…' : user.avatar ? 'Change picture' : 'Add a picture'}</button>
+            {user.avatar && <button className="btn btn--quiet" disabled={!!busy} onClick={async () => { setBusy('picture'); try { await account.removeAvatar(user.id) } catch (x) { setErr(x.message) } finally { setBusy('') } }}>Remove</button>}
+          </div>
+          <input ref={file} type="file" accept="image/*" hidden onChange={pick} />
+          <p className="hint">Cropped to a small square on your device before it is saved.</p>
+        </div>
+        <label className="field">Your name<input id="profile-name" value={name} maxLength={40} autoComplete="nickname" onChange={(e) => setName(e.target.value)} onBlur={saveName} /></label>
+        <p className="hint">Used for the greeting on the home page.</p>
+        <p>Email: <strong>{user.email}</strong></p>
+        <p className="hint">{SYNC_SAYS[sync]}</p>
+        {err && <p className="error">{err}</p>}
+      </section>
+      <section className="card">
+        <span className="label">Password</span>
+        {pwOpen ? <NewPassword title="Change your password" onDone={() => setPwOpen(false)} onCancel={() => setPwOpen(false)} />
+          : <div className="row"><button className="btn" onClick={() => setPwOpen(true)}>Change password</button><button className="btn btn--quiet" onClick={() => account.signOut()}>Sign out</button></div>}
+      </section>
+      <section className="card">
+        <span className="label">Your data</span>
+        <p className="hint">Kept online: your email, name, picture and a copy of your progress. Nothing else. <a href="https://hoodedhacker32.github.io/learn-elvish/privacy.html" target="_blank" rel="noopener">Privacy</a></p>
+        <DeleteAccount user={user} />
+      </section>
+    </div>
   )
 }
 
@@ -761,6 +877,7 @@ function Session({ title, lang, initial, onFinish, onQuit }) {
     if (answered) return
     const result = judge(step, given)
     setAnswered({ given, result, praise: PRAISE[(Math.random() * PRAISE.length) | 0] })
+    sound.play(result === 'wrong' ? 'wrong' : 'right')
     setRun((r) => (result === 'wrong' ? 0 : r + 1))
     setLog((l) => [...l, { key: step.item?.key, result, t: step.t, kind: step.item?.kind }])
     if (result === 'wrong' && !step.retry) setQueue((q) => [...q, { ...step, retry: true }])
@@ -931,7 +1048,7 @@ function Notebook({ course, state }) {
 
 // ——— settings ———
 
-function Settings({ state, update, user, sync, online, onAccount, onRetakeQuiz, onReset }) {
+function Settings({ state, update, user, sync, online, onAccount, onProfile, onRetakeQuiz, onReset }) {
   const [sure, setSure] = useState(false)
   const [perm, setPerm] = useState('')
   const r = state.settings.reminder
@@ -942,11 +1059,17 @@ function Settings({ state, update, user, sync, online, onAccount, onRetakeQuiz, 
       <section className="card">
         <span className="label">Daily goal</span>
         <div className="segmented" role="radiogroup" aria-label="Daily goal">
-          {[[30, 'Light · 5 min'], [60, 'Steady · 10 min'], [120, 'Keen · 20 min']].map(([g, label]) => (
+          {[[150, 'Light · 5 min'], [300, 'Steady · 10 min'], [600, 'Keen · 20 min']].map(([g, label]) => (
             <button key={g} role="radio" aria-checked={state.settings.goal === g} className={state.settings.goal === g ? 'is-on' : ''} onClick={() => set({ goal: g })}>{label}</button>
           ))}
         </div>
         <p className="hint">Missing the goal costs nothing. It only shapes how full the ring looks.</p>
+      </section>
+
+      <section className="card">
+        <span className="label">Sounds</span>
+        <label className="switch"><input id="sound-on" type="checkbox" checked={state.settings.sound !== false} onChange={(e) => { set({ sound: e.target.checked }); sound.set(e.target.checked); if (e.target.checked) sound.play('right') }} /> Soft sounds for taps, answers and finished lessons</label>
+        <p className="hint">Quiet, and under any music you are playing. On iPhone and iPad they follow the silent switch.</p>
       </section>
 
       <section className="card">
@@ -964,6 +1087,15 @@ function Settings({ state, update, user, sync, online, onAccount, onRetakeQuiz, 
             <button className="btn" onClick={() => reminders.test({ title: 'Pedo Edhellen', body: 'This is how a reminder will look.' })}>Send a test reminder</button>
           </>
         ) : <p className="hint">Reminders work in the desktop app and the installed web app.</p>}
+      </section>
+
+      <section className="card">
+        <span className="label">About</span>
+        <p>Pedo Edhellen {APP_VERSION}. An unofficial fan project; the Elvish languages are J.R.R. Tolkien’s.</p>
+        <div className="row">
+          <a className="btn btn--quiet" href="https://hoodedhacker32.github.io/learn-elvish/credits.html" target="_blank" rel="noopener">Credits</a>
+          <a className="btn btn--quiet" href="https://hoodedhacker32.github.io/learn-elvish/privacy.html" target="_blank" rel="noopener">Privacy</a>
+        </div>
       </section>
 
       <section className="card">
@@ -985,7 +1117,7 @@ function Settings({ state, update, user, sync, online, onAccount, onRetakeQuiz, 
         ) : user ? (
           <>
             <p>Signed in as <strong>{user.email}</strong>. {SYNC_SAYS[sync]}</p>
-            <div className="row"><button className="btn" onClick={() => account.signOut()}>Sign out</button></div>
+            <div className="row"><button className="btn" onClick={onProfile}>Your profile</button><button className="btn btn--quiet" onClick={() => account.signOut()}>Sign out</button></div>
             <p className="hint">Signing out keeps your progress on this device too.</p>
           </>
         ) : online ? (
@@ -1038,7 +1170,17 @@ export default function App() {
 function Learner({ user }) {
   const [state, update, sync] = useProgress(user)
   const [view, setView] = useState({ name: 'home' })
+  // sounds follow the setting; any button gives a soft tap when pressed
+  const soundOn = state?.settings?.sound !== false
+  useEffect(() => { sound.set(soundOn) }, [soundOn])
+  useEffect(() => {
+    const tap = (e) => { if (e.button === 0 && e.target.closest?.('button:not(:disabled), [role="radio"], [role="tab"]')) sound.play('tap') }
+    document.addEventListener('pointerdown', tap)
+    return () => document.removeEventListener('pointerdown', tap)
+  }, [])
   const [ask, setAsk] = useState(null)
+  const [recovering, setRecovering] = useState(false)
+  useEffect(() => account.onRecovery(() => setRecovering(true)), [])
   const [fresher, setFresher] = useState(null)
   const online = useOnline()
   const profile = { id: user?.id || 'device', name: state?.name || user?.name || '' }
@@ -1117,6 +1259,7 @@ function Learner({ user }) {
     const finished = before.filter((c) => progressOf(c, after.daily, day) >= c.goal)
     const goalReached = (after.days[day] || 0) >= after.settings.goal && (state.days[day] || 0) < state.settings.goal
     const nextL = view.kind === 'lesson' ? course.lessons[course.lessons.indexOf(view.lesson) + 1] : null
+    sound.play('done')
     go({ name: 'done', summary: { title: view.title, score, xp, learned, finished, goalReached }, next: nextL?.id })
   }
 
@@ -1127,7 +1270,7 @@ function Learner({ user }) {
   })
 
   const due = dueKeys(state.srs, course.lang).filter((k) => course.byKey.has(k)).length
-  const PAGE = { home: COURSE_NAME[course.id], reading: 'Reading room', notebook: 'Notebook', settings: 'Settings', writing: 'Writing practice', guide: 'Tengwar on your devices' }
+  const PAGE = { home: COURSE_NAME[course.id], reading: 'Reading room', notebook: 'Notebook', settings: 'Settings', profile: 'Your profile', writing: 'Writing practice', guide: 'Tengwar on your devices' }
   return (
     <div className="shell">
       <TitleBar state={state} update={update} go={go} profile={profile} user={user} onAccount={openAccount} />
@@ -1152,6 +1295,7 @@ function Learner({ user }) {
             />
           )}
           {ask && <AccountForm start={ask} name={state.name} onDone={() => setAsk(null)} onCancel={() => setAsk(null)} />}
+          {recovering && <NewPassword onDone={() => setRecovering(false)} onCancel={() => setRecovering(false)} />}
           {view.name === 'home' && <Home course={course} state={state} profile={profile} onOpen={openLesson} onReview={openReview} onRead={() => go({ name: 'reading' })} onWrite={() => go({ name: 'writing' })} onGuide={() => go({ name: 'guide' })}
             nudge={accountsAvailable && online && !user && !ask && !state.settings.noNudge
               ? <AccountNudge onOpen={openAccount} onDismiss={() => update((s) => ({ ...s, settings: { ...s.settings, noNudge: true } }))} /> : null} />}
@@ -1161,8 +1305,9 @@ function Learner({ user }) {
           {view.name === 'guide' && <Guide />}
           {view.name === 'reading' && <Reading lang={course.lang} state={state} onRead={readLine} />}
           {view.name === 'notebook' && <Notebook course={course} state={state} />}
+          {view.name === 'profile' && (user ? <Profile user={user} state={state} update={update} sync={sync} /> : <p className="hint">Sign in to see your profile.</p>)}
           {view.name === 'settings' && (
-            <Settings state={state} update={update} user={user} sync={sync} online={online} onAccount={openAccount}
+            <Settings state={state} update={update} user={user} sync={sync} online={online} onAccount={openAccount} onProfile={() => go({ name: 'profile' })}
               onRetakeQuiz={() => go({ name: 'quiz' })}
               onReset={() => update((s) => ({ ...fresh(), track: s.track, quiz: s.quiz, name: s.name, settings: s.settings, updatedAt: Date.now() }))} />
           )}

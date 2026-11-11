@@ -179,8 +179,13 @@ cite { font-style: italic; color: var(--silver-3); }
 .btn:disabled { opacity: 0.55; }
 .btn--primary { background: var(--enamel); border-color: var(--enamel); color: var(--enamel-ink); }
 .btn--primary:hover:not(:disabled) { background: var(--enamel-hi); border-color: var(--enamel-hi); box-shadow: 0 6px 18px rgba(143, 207, 150, 0.22); }
-.btn--glow { animation: breathe 3.2s ease-in-out infinite; }
-@keyframes breathe { 50% { box-shadow: 0 0 0 6px rgba(143, 207, 150, 0.12); } }
+/* the breathing glow is a ring that fades in and out (opacity only, so the GPU does it without repainting) */
+.btn--glow { position: relative; }
+.btn--glow::after, .lesson.is-next::after {
+  content: ''; position: absolute; inset: -6px; border-radius: inherit; pointer-events: none;
+  box-shadow: 0 0 0 6px rgba(143, 207, 150, 0.12); opacity: 0; animation: breathe 3.2s ease-in-out infinite;
+}
+@keyframes breathe { 50% { opacity: 1; } }
 .btn--quiet { border-color: transparent; background: none; min-height: 36px; padding: 0 10px; color: var(--silver-2); }
 .btn--quiet:hover:not(:disabled) { background: rgba(255, 255, 255, 0.04); border-color: transparent; }
 .btn--danger { border-color: var(--rust); color: var(--rust); background: none; }
@@ -188,10 +193,8 @@ cite { font-style: italic; color: var(--silver-3); }
 .meter { height: 8px; border-radius: 99px; background: var(--ground-deep); border: 1px solid var(--line-soft); overflow: hidden; }
 .meter span {
   display: block; height: 100%; border-radius: 99px; transition: width 0.6s var(--ease);
-  background: linear-gradient(90deg, var(--enamel), var(--enamel-hi), var(--enamel)); background-size: 200% 100%;
-  animation: sheen 2.6s linear infinite;
+  background: linear-gradient(90deg, var(--enamel), var(--enamel-hi), var(--enamel));
 }
-@keyframes sheen { to { background-position: -200% 0; } }
 
 /* provenance leaf, as in the translator */
 .leaf { width: 14px; height: 14px; flex: none; }
@@ -258,11 +261,14 @@ cite { font-style: italic; color: var(--silver-3); }
 .today__ringtext { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; line-height: 1.1; }
 .today__ringtext .num { font: 600 24px/1 var(--ui); }
 .today__ringtext span:last-child { font-size: 12px; color: var(--silver-3); }
-.ring { transform: rotate(-90deg); }
+.ring { transform: rotate(-90deg); overflow: visible; }
 .ring circle { fill: none; stroke-width: 7; }
 .ring__track { stroke: var(--ground-deep); }
 .ring__fill { stroke: var(--enamel); stroke-linecap: round; transition: stroke-dashoffset 1.1s var(--ease); }
-.ring.is-full .ring__fill { stroke: var(--gold); filter: drop-shadow(0 0 6px rgba(220, 184, 98, 0.5)); }
+/* the glow is a soft wider stroke under the ring, not a filter: a filter is clipped to a square on iPad */
+.ring__glow { stroke: none; }
+.ring.is-full .ring__fill { stroke: var(--gold); }
+.ring.is-full .ring__glow { stroke: rgba(220, 184, 98, 0.22); stroke-width: 13; }
 .today__main { display: grid; gap: 12px; min-width: 0; flex: 1; }
 .today__line { margin: 0; font-size: 14px; color: var(--silver-2); }
 .today__line strong { color: var(--silver); }
@@ -309,7 +315,7 @@ cite { font-style: italic; color: var(--silver-3); }
   transition: background 0.2s, border-color 0.2s, transform 0.25s var(--ease);
 }
 .lesson:hover { background: var(--panel); border-color: var(--line); transform: translateX(4px); }
-.lesson.is-next { border-color: var(--enamel); background: var(--panel); animation: breathe 3.2s ease-in-out infinite; }
+.lesson.is-next { border-color: var(--enamel); background: var(--panel); position: relative; }
 .lesson.is-done .lesson__title { color: var(--silver-2); }
 .lesson.is-done .leaf path:first-child { fill: var(--enamel); stroke: var(--enamel); }
 .lesson__mark .leaf { width: 18px; height: 18px; }
@@ -733,3 +739,55 @@ cite { font-style: italic; color: var(--silver-3); }
   .dgm-table__cell small { font-size: 9.5px; }
 }
 .dgm-glyph--ink { fill: #222a25; }
+
+/* a computer: each Tengwar key shows the real key that types it (Tengwar Annatar's layout) */
+.twkb__key { position: relative; }
+.twkb__kbd { position: absolute; top: 3px; left: 5px; font: 600 10px/1 var(--mono, ui-monospace, monospace); color: var(--silver-3); opacity: 0.85; }
+.twkb__key.is-lit .twkb__kbd, .twkb__key:active .twkb__kbd { color: var(--enamel-ink); }
+
+/* a phone: the keyboard works like the phone's own */
+.twkb--phone { gap: 6px; padding: 6px 4px 4px; margin: 0 -4px; background: var(--ground-deep); border-radius: 12px; }
+.twkb--phone .twkb__row { gap: 4px; }
+.twkb--phone .twkb__key { min-height: 48px; border-radius: 7px; padding: 2px 0; box-shadow: 0 1px 0 rgba(0, 0, 0, 0.35); }
+.twkb--phone .twkb__key:hover { background: var(--panel); border-color: var(--line-soft); }
+.twkb--phone .twkb__key:active { transform: none; }
+.twkb--phone .twkb__key.is-down { background: var(--panel-hi); color: var(--silver); border-color: var(--line); }
+.twkb--phone .twkb__glyph { font-size: 23px; }
+.twkb--phone .twkb__lab { font-size: 9.5px; }
+.twkb__pop {
+  position: absolute; left: 50%; bottom: calc(100% + 6px); transform: translateX(-50%); z-index: 3;
+  min-width: 58px; padding: 6px 8px 4px; display: grid; justify-items: center; pointer-events: none;
+  background: var(--panel-hi); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+.twkb__pop .twkb__glyph { font-size: 40px; line-height: 1.1; }
+.twkb__pop .twkb__lab { color: var(--silver-2); font-size: 11px; }
+.twkb__row--bottom { grid-template-columns: 1.4fr 5fr 1.4fr; }
+.twkb--phone .twkb__key--fn { font: 600 13px var(--ui); color: var(--silver-2); background: var(--ground); }
+.twkb--phone .twkb__key--space { font: 600 13px var(--ui); color: var(--silver-3); }
+.twkb--phone .twkb__key--back { font-size: 20px; }
+.desk__input--convert { resize: vertical; min-height: 84px; font-family: var(--mono, ui-monospace, monospace); }
+
+/* ——— profile ——— */
+.avatar { display: inline-grid; place-items: center; border-radius: 50%; object-fit: cover; background: var(--panel-hi); color: var(--gold); font-weight: 600; flex: none; }
+.me__btn:has(.avatar) { padding: 0; overflow: hidden; }
+.profile { display: grid; gap: 16px; max-width: 560px; }
+.profile__pic { display: grid; justify-items: start; gap: 10px; margin-bottom: 12px; }
+.linkish { background: none; border: 0; padding: 0; color: var(--silver-2); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; justify-self: start; font: inherit; font-size: 13px; }
+.btn--danger:not(.btn--quiet) { background: #7a2e26; color: #fbe9e6; border-color: #7a2e26; }
+.danger { display: grid; gap: 10px; padding: 12px 14px; border: 1px solid rgba(232, 163, 154, 0.35); border-radius: 10px; background: rgba(122, 46, 38, 0.18); }
+.danger p { margin: 0; }
+
+/* battery: nothing loops while the app is out of sight or not in use, or for anyone who prefers less motion */
+.is-idle *, .is-idle *::before, .is-idle *::after { animation-play-state: paused !important; }
+@media (prefers-reduced-motion: reduce) {
+  .btn--glow::after, .lesson.is-next::after, .week__day.is-today .week__leaf { animation: none; }
+}
+
+/* the desk's six ways in: a pill row while it fits, three to a row on a phone */
+.desk { min-width: 0; }
+@media (max-width: 560px) {
+  .desk__head .track { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-radius: 14px; width: 100%; }
+  .desk__head .track button { padding: 6px 4px; border-radius: 10px; }
+}
+.twkb--phone .twkb__key { -webkit-tap-highlight-color: transparent; }
+.twkb--phone .twkb__key:focus:not(:focus-visible) { outline: none; background: var(--panel); }

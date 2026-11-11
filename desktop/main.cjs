@@ -52,7 +52,7 @@ function show(title, body) {
 }
 function tick() {
   const r = reminder
-  if (!r.enabled || r.practisedToday || !r.body || remindedToday()) return
+  if (!r.enabled || (r.practisedToday && r.practisedOn === todayStr()) || !r.body || remindedToday()) return
   const now = new Date()
   const [h, m] = (r.time || '19:00').split(':').map(Number)
   if (now.getHours() < h || (now.getHours() === h && now.getMinutes() < m)) return
@@ -60,7 +60,7 @@ function tick() {
   fs.writeFileSync(lastFile(), todayStr())
   show(r.title, r.body)
 }
-ipcMain.handle('reminders:schedule', (_e, settings) => { reminder = { ...reminder, ...settings }; updateTray(); return true })
+ipcMain.handle('reminders:schedule', (_e, settings) => { reminder = { ...reminder, ...settings, practisedOn: todayStr() }; updateTray(); return true })
 ipcMain.handle('reminders:test', (_e, s) => { show(s.title, s.body); return true })
 
 // ——— the app's own window buttons ———
@@ -80,6 +80,10 @@ function createWindow() {
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, sandbox: true, nodeIntegration: false, backgroundThrottling: !PROBE },
   })
   win.once('ready-to-show', () => win.show())
+  // tell the page when the window is out of sight or not in use, so it can stop its gentle animations
+  const idle = (v) => win?.webContents.send('window:idle', v)
+  win.on('blur', () => idle(true)); win.on('focus', () => idle(false))
+  win.on('minimize', () => idle(true)); win.on('restore', () => idle(false))
   const sendState = () => win?.webContents.send('window:state', { maximized: win.isMaximized() })
   win.on('maximize', sendState)
   win.on('unmaximize', sendState)
@@ -91,10 +95,8 @@ function createWindow() {
   win.webContents.on('will-navigate', (e, url) => {
     if (!url.startsWith('file:') && !(DEV_URL && url.startsWith(DEV_URL))) { e.preventDefault(); if (/^https?:/.test(url)) shell.openExternal(url) }
   })
-  // closing hides to the tray while reminders are on, so they can still arrive
-  win.on('close', (e) => {
-    if (!quitting && reminder.enabled && !PROBE) { e.preventDefault(); win.hide() }
-  })
+  // Closing really closes the window, freeing the page and its memory, so the app costs almost nothing in the
+  // tray. Reminders live in this small main process and still arrive; the tray opens the window again.
   win.on('closed', () => { win = null })
   if (DEV_URL) win.loadURL(DEV_URL)
   else win.loadFile(path.join(__dirname, '..', 'dist-desktop', 'index.html'))

@@ -16,6 +16,11 @@ contextBridge.exposeInMainWorld('pedo', {
     toggleMaximize: () => ipcRenderer.invoke('window:toggleMaximize'),
     close: () => ipcRenderer.invoke('window:close'),
     isMaximized: () => ipcRenderer.invoke('window:isMaximized'),
+    onIdle: (fn) => {
+      const h = (_e, v) => fn(v)
+      ipcRenderer.on('window:idle', h)
+      return () => ipcRenderer.removeListener('window:idle', h)
+    },
     onState: (fn) => {
       const h = (_e, s) => fn(s)
       ipcRenderer.on('window:state', h)

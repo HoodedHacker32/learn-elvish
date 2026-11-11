@@ -74,6 +74,8 @@ const END = `</main>
       <a href="https://hoodedhacker32.github.io/elvish-translator/">Lam Edhellen, the translator</a>
       <a href="https://eldamo.org">Eldamo</a>
       <a href="${REPO}">Source code</a>
+      <a href="credits.html">Credits</a>
+      <a href="privacy.html">Privacy</a>
     </nav>
   </div>
 </footer>
